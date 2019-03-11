@@ -104,4 +104,3 @@ venv.bak/
 .mypy_cache/
 alttp_vt_randomizer
 alttp_japanese_v1.0.sfc
-deployment.yml
