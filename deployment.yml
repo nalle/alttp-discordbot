@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alttpbot
+  labels:
+    app: alttpbot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alttpbot
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: alttpbot
+    spec:
+      containers:
+        - name: alttpbot
+          imagePullPolicy: Always
+          image: registry.gigabit.nu:5000/alttpbot:new
+          ports:
+            - name: http
+              containerPort: 80
+          env:
+            - name: DISCORD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: discordtoken
+                  key: token
+      imagePullSecrets:
+        - name: regcred
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: alttpbot
+  labels:
+    app: alttpbot
+spec:
+  selector:
+    app: alttpbot
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 80
+  externalIPs:
+  - 212.63.208.215
