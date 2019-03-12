@@ -1,4 +1,4 @@
-DATE=$(shell date +%s)
+DATE=$(shell date +%s | shasum | cut -d' ' -f1)
 
 all:
 	docker build -t alttpbot .
