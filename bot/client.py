@@ -22,7 +22,6 @@ class Client():
         race.time = None
         race.remaining = 0
 
-        
     @client.event
     @asyncio.coroutine
     def on_ready():
