@@ -1,9 +1,11 @@
-FROM debian
+FROM alpine
 
 COPY requirements.txt /tmp/requirements.txt
-RUN apt-get update && \
-    apt-get install -y python3 python3-virtualenv python3-pip python-dev nginx 
+RUN apk update && \
+    apk add python3 py3-virtualenv nginx 
+RUN pip3 install --upgrade pip
 RUN pip3 install -r /tmp/requirements.txt
+RUN mkdir -p /run/nginx/
 
 COPY default.conf /etc/nginx/sites-enabled/default
 COPY bot /opt/discordbot/bot
@@ -12,4 +14,4 @@ COPY start.sh /opt/discordbot
 WORKDIR /opt/discordbot
 
 RUN touch /tmp/index.html
-CMD ./start.sh
+CMD sh start.sh
