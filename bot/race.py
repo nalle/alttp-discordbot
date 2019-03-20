@@ -7,7 +7,7 @@ from datetime import timedelta
 
 class Race():
     def __init__(self, channel):
-        self.r = Redis(host='10.233.75.15', port=6379)
+        self.r = Redis(host='10.233.56.41', port=6379)
         race = self.r.get(channel)
         if race:
             race = json.loads(race)[channel]

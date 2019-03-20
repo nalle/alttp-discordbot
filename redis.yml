@@ -26,40 +26,49 @@ spec:
     requests:
       storage: 2Gi
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
+  name: redis
   labels:
-    name: redis
+    app: redis
     redis-sentinel: "true"
     role: master
-  name: redis
 spec:
-  containers:
-    - name: master
-      image: k8s.gcr.io/redis:v1
-      env:
-        - name: MASTER
-          value: "true"
-      ports:
-        - containerPort: 6379
-      resources:
-        limits:
-          cpu: "0.1"
-      volumeMounts:
-        - mountPath: /redis-master-data
-          name: redis-storage
-    - name: sentinel
-      image: k8s.gcr.io/redis:v1
-      env:
-        - name: SENTINEL
-          value: "true"
-      ports:
-        - containerPort: 26379
-  volumes:
-    - name: redis-storage
-      persistentVolumeClaim:
-        claimName: redis-claim
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: master
+          image: k8s.gcr.io/redis:v1
+          env:
+            - name: MASTER
+              value: "true"
+          ports:
+            - containerPort: 6379
+          resources:
+            limits:
+              cpu: "0.1"
+          volumeMounts:
+            - mountPath: /redis-master-data
+              name: redis-storage
+        - name: sentinel
+          image: k8s.gcr.io/redis:v1
+          env:
+            - name: SENTINEL
+              value: "true"
+          ports:
+            - containerPort: 6379
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: redis-claim
 ---
 kind: Service
 apiVersion: v1
@@ -76,3 +85,4 @@ spec:
     port: 6379
   externalIPs:
   - 10.233.56.41
+  - 212.63.208.215
