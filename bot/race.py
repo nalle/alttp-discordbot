@@ -1,13 +1,14 @@
 import time
 import json
 import operator
+import os
 from redis import Redis
 from tabulate import tabulate
 from datetime import timedelta
 
 class Race():
     def __init__(self, channel):
-        self.r = Redis(host='10.233.56.41', port=6379)
+        self.r = Redis(host='10.233.56.41', port=6379, password=os.environ.get('REDIS_PASSWORD'))
         race = self.r.get(channel)
         if race:
             race = json.loads(race)[channel]

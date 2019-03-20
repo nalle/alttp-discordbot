@@ -29,6 +29,12 @@ spec:
                 secretKeyRef:
                   name: discordtoken
                   key: token
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redispassword
+                  key: password
+
       imagePullSecrets:
         - name: regcred
 

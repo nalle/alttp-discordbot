@@ -39,6 +39,8 @@ spec:
   selector:
     matchLabels:
       app: redis
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -46,10 +48,19 @@ spec:
     spec:
       containers:
         - name: master
-          image: k8s.gcr.io/redis:v1
+          imagePullPolicy: Always
+          image: registry.gigabit.nu/redis:v1
+          command: ["redis-server"]
+          args: ["--requirepass", "$(REDIS_PASSWORD)"]
           env:
             - name: MASTER
               value: "true"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redispassword
+                  key: password
+
           ports:
             - containerPort: 6379
           resources:
@@ -58,13 +69,8 @@ spec:
           volumeMounts:
             - mountPath: /redis-master-data
               name: redis-storage
-        - name: sentinel
-          image: k8s.gcr.io/redis:v1
-          env:
-            - name: SENTINEL
-              value: "true"
-          ports:
-            - containerPort: 6379
+      imagePullSecrets:
+        - name: regcred
       volumes:
         - name: redis-storage
           persistentVolumeClaim:
