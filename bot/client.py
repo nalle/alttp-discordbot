@@ -35,73 +35,49 @@ class Client():
     @client.event
     @asyncio.coroutine
     def on_message(message):
-        def createrace(channel):
-            race[message.channel] = Race()
-            race[message.channel].state = False 
-            race[message.channel].runners = {}
-            race[message.channel].time = None
-            race[message.channel].remaining = 0
-
-        def write_json():
-            ready = 0
-            for runner in race[message.channel].runners:
-                if race[message.channel].runners[runner]['ready']:
-                    ready += 1
-
-            f = open("/tmp/status.json", "w+")
-            f.write(json.dumps({"race": race[message.channel].state,
-                                "remaining": len(race[message.channel].runners)-ready,
-                                "ready": ready,
-                                "total": len(race[message.channel].runners),
-                                "time": race[message.channel].time
-                               }))
-            f.close()
 
         def startrace():
-            race[message.channel].state = True
-            race[message.channel].runners = {}
-            race[message.channel].time = None
+            race[message.channel.name].state = True
+            race[message.channel.name].runners = {}
+            race[message.channel.name].time = None
 
         def stoprace():
-            race[message.channel].state = False
-            race[message.channel].remaining = 0
-            #race[message.channel].runners = {}
-            #race[message.channel].time = None
+            race[message.channel.name].state = False
+            race[message.channel.name].remaining = 0
+            #race[message.channel.name].runners = {}
+            #race[message.channel.name].time = None
 
         def join():
-            race[message.channel].runners[message.author.name] = {"ready": False, "done": False, "time": None}        
+            race[message.channel.name].runners[message.author.name] = {"ready": False, "done": False, "time": None}        
 
         def unjoin():
-            del race[message.channel].runners[message.author.name] 
+            del race[message.channel.name].runners[message.author.name] 
 
         def check_done():
-            race[message.channel].done = 0
-            for runner in race[message.channel].runners:
-                if not race[message.channel].runners[runner]['done']:
-                    race[message.channel].done += 1
+            race[message.channel.name].done = 0
+            for runner in race[message.channel.name].runners:
+                if not race[message.channel.name].runners[runner]['done']:
+                    race[message.channel.name].done += 1
 
         def check_remaining():
-            race[message.channel].remaining = 0
-            for runner in race[message.channel].runners:
-                if not race[message.channel].runners[runner]['ready']:
-                    race[message.channel].remaining += 1
+            race[message.channel.name].remaining = 0
+            for runner in race[message.channel.name].runners:
+                if not race[message.channel.name].runners[runner]['ready']:
+                    race[message.channel.name].remaining += 1
  
         def ready():
-            race[message.channel].runners[message.author.name]['ready'] = True
+            race[message.channel.name].runners[message.author.name]['ready'] = True
 
         def done():
-            race[message.channel].runners[message.author.name]['done'] = True
-            race[message.channel].runners[message.author.name]['time'] = round(time.time())
-
-
-        if not os.path.isfile("/tmp/status.json"):
-            write_json()
+            race[message.channel.name].runners[message.author.name]['done'] = True
+            race[message.channel.name].runners[message.author.name]['time'] = round(time.time())
             
         if message.author.name == client.user: 
             return
 
-        if message.channel not in race:
-            createrace(message.channel)
+        if message.channel.name not in race:
+            race[message.channel.name] = Race(message.channel.name)
+            race[message.channel.name].persist()
 
         if message.content.startswith(".races"):
             races = {}
@@ -118,40 +94,40 @@ class Client():
             yield from client.send_message(message.channel, races)
     
         if message.content.startswith(".startrace"):
-            if race[message.channel].state:
+            if race[message.channel.name].state:
                 yield from client.send_message(message.channel, messages.alreadystarted)
             else:
                 startrace()
                 yield from client.send_message(message.channel, messages.startrace)
 
         if message.content.startswith(".stoprace"):
-            if race[message.channel].state:
+            if race[message.channel.name].state:
                 stoprace()
                 yield from client.send_message(message.channel, messages.stoprace) 
             else:
                 yield from client.send_message(message.channel, messages.norace) 
     
         if message.content.startswith(".join") or message.content.startswith(".enter"):
-            if race[message.channel].state:
+            if race[message.channel.name].state:
                 join()
                 yield from client.send_message(message.channel, messages.joinrace(message.author.name))
             else:
                 yield from client.send_message(message.channel, messages.norace)
 
         if message.content.startswith(".unjoin") or message.content.startswith(".quit") or message.content.startswith(".forfeit"):
-            if race[message.channel].state:
+            if race[message.channel.name].state:
                 unjoin()
                 check_remaining()
                 check_done()
                 yield from client.send_message(message.channel, messages.quitrace(message.author.name))
     
-                if race[message.channel].done == 0 and race[message.channel].time is not None:
+                if race[message.channel.name].done == 0 and race[message.channel.name].time is not None:
                     stoprace()
-                    yield from client.send_message(message.channel, race[message.channel].results())
+                    yield from client.send_message(message.channel, race[message.channel.name].results())
 
-                if len(race[message.channel].runners) > 0 and race[message.channel].done > 0:
-                    if race[message.channel].remaining == 0:
-                        write_json()
+                if len(race[message.channel.name].runners) > 0 and race[message.channel.name].done > 0:
+                    if race[message.channel.name].remaining == 0:
+                        race[message.channel.name].persist()
                         yield from client.send_message(message.channel, messages.countdown)
                         time.sleep(5)
 
@@ -159,19 +135,19 @@ class Client():
                             yield from client.send_message(message.channel, "{}".format(i))
                             time.sleep(1)
 
-                        race[message.channel].time = round(time.time())
+                        race[message.channel.name].time = round(time.time())
 
                         yield from client.send_message(message.channel, messages.go)
             else:
                 yield from client.send_message(message.channel, messages.norace)
             
         if message.content.startswith(".ready"):
-            if race[message.channel].state:
-                if message.author.name in race[message.channel].runners:
+            if race[message.channel.name].state:
+                if message.author.name in race[message.channel.name].runners:
                     ready()
                     check_remaining()
-                    if race[message.channel].remaining == 0:
-                        write_json()
+                    if race[message.channel.name].remaining == 0:
+                        race[message.channel.name].persist()
                         yield from client.send_message(message.channel, messages.countdown)
 
                         time.sleep(5)
@@ -180,7 +156,7 @@ class Client():
                             yield from client.send_message(message.channel, "{}".format(i))
                             time.sleep(1)
 
-                        race[message.channel].time = round(time.time())
+                        race[message.channel.name].time = round(time.time())
                         yield from client.send_message(message.channel, messages.go)
                     else:    
                         yield from client.send_message(message.channel, messages.remaining(race[message.channel].remaining))
@@ -191,16 +167,16 @@ class Client():
                 
             
         if message.content.startswith(".done"):
-            if race[message.channel].state:
-                if race[message.channel].runners[message.author.name]['done']: 
+            if race[message.channel.name].state:
+                if race[message.channel.name].runners[message.author.name]['done']: 
                     yield from client.send_message(message.channel, messages.alreadydone)
                 else:
-                    if race[message.channel].time is not None:
+                    if race[message.channel.name].time is not None:
                         done() 
                         check_done()
-                        if race[message.channel].done == 0:
+                        if race[message.channel.name].done == 0:
                             stoprace()
-                            yield from client.send_message(message.channel, race[message.channel].results())
+                            yield from client.send_message(message.channel, race[message.channel.name].results())
                         else: 
                             yield from client.send_message(message.channel, messages.done(str(timedelta(seconds=race[message.channel].runners[message.author.name]['time']-race[message.channel].time))))
                     else:
@@ -209,16 +185,20 @@ class Client():
                 yield from client.send_message(message.channel, messages.norace)
 
         if message.content.startswith(".runners") or message.content.startswith(".list"):
-            if race[message.channel].state:
-                for runner in race[message.channel].runners:
+            if race[message.channel.name].state:
+                for runner in race[message.channel.name].runners:
                     yield from client.send_message(message.channel, runner)
             else:
                 yield from client.send_message(message.channel, messages.norace)
 
         if message.content.startswith(".persist"):
-            race[message.channel].persist()
+            race[message.channel.name].persist()
+
+        if message.content.startswith(".print"):
+            yield from client.send_message(message.channel, race[message.channel.name].print())
+
         if message.content.startswith(".result"):
-            yield from client.send_message(message.channel, race[message.channel].results())
+            yield from client.send_message(message.channel, race[message.channel.name].results())
 
         if message.content.startswith(".standard"):
             yield from client.send_message(message.channel, messages.generating_seed)
@@ -240,7 +220,4 @@ class Client():
             yield from client.send_message(message.channel, "{}".format(seed.generate(**kwargs)))
 
         if message.content.startswith("."):
-            write_json()
-        
-        
-
+            race[message.channel.name].persist()
