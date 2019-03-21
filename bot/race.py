@@ -44,3 +44,43 @@ class Race():
     def print(self):
         return json.loads(self.r.get(self.channel))
 
+    def startrace(self):
+        self.state = True
+        self.runners = {}
+        self.time = None
+
+    def stoprace(self):
+        self.state = False
+        self.remaining = 0
+        #self.runners = {}
+        #self.time = None
+
+    def join(self, name):
+        self.runners[name] = {"ready": False, "done": False, "time": None}        
+
+    def unjoin(self, name):
+        del self.runners[name] 
+
+    def check_done(self):
+        done = 0
+        for runner in self.runners:
+            if not self.runners[runner]['done']:
+                done += 1
+        return done
+
+    def check_remaining(self):
+        remaining = 0
+        for runner in self.runners:
+            if not self.runners[runner]['ready']:
+                remaining += 1
+        return remaining
+ 
+    def ready(self, name):
+        self.runners[name]['ready'] = True
+
+    def done(self, name):
+        self.runners[name]['done'] = True
+        self.runners[name]['time'] = round(time.time())
+        self.persist()
+
+
