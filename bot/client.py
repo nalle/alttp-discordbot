@@ -88,7 +88,7 @@ class Client():
                     yield from client.send_message(message.channel, race[message.channel.name].results())
 
                 if len(race[message.channel.name].runners) > 0 and race[message.channel.name].check_done() > 0:
-                    if race[message.channel.name].remaining() == 0:
+                    if race[message.channel.name].check_remaining() == 0 and race[message.channel.name].time is None:
                         race[message.channel.name].persist()
                         yield from client.send_message(message.channel, messages.countdown)
                         time.sleep(5)

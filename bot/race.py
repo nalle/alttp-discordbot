@@ -69,11 +69,11 @@ class Race():
         return done
 
     def check_remaining(self):
-        remaining = 0
+        self.remaining = 0
         for runner in self.runners:
             if not self.runners[runner]['ready']:
-                remaining += 1
-        return remaining
+                self.remaining += 1
+        return self.remaining
  
     def ready(self, name):
         self.runners[name]['ready'] = True
