@@ -120,7 +120,7 @@ class Client():
                         race[message.channel.name].time = round(time.time())
                         yield from client.send_message(message.channel, messages.go)
                     else:    
-                        yield from client.send_message(message.channel, messages.remaining(race[message.channel.name].remaining()))
+                        yield from client.send_message(message.channel, messages.remaining(race[message.channel.name].remaining))
                 else:
                     yield from client.send_message(message.channel, messages.notinrace)
             else:
@@ -138,7 +138,7 @@ class Client():
                             race[message.channel.name].stoprace()
                             yield from client.send_message(message.channel, race[message.channel.name].results())
                         else: 
-                            yield from client.send_message(message.channel, messages.done(str(timedelta(seconds=race[message.channel].runners[message.author.name]['time']-race[message.channel].time))))
+                            yield from client.send_message(message.channel, messages.done(str(timedelta(seconds=race[message.channel.name].runners[message.author.name]['time']-race[message.channel.name].time))))
                     else:
                         yield from client.send_message(message.channel, messages.notstarted)
             else:
