@@ -52,7 +52,7 @@ class Client(discord.Client):
         if not race:
             race = Race(channel_name, self.redis)
             await race.initialize(channel_name)
-            race.persist()
+            await race.persist()
 
         if message.content.startswith(".races"):
             current_races = {}
@@ -72,3 +72,146 @@ class Client(discord.Client):
                     }
 
             yield current_races
+
+        if message.content.startswith(".startrace"):
+            if race.state:
+                yield messages.alreadystarted
+            else:
+                await race.startrace()
+                yield messages.startrace
+
+        if message.content.startswith(".stoprace"):
+            if race.state:
+                await race.stoprace()
+                yield messages.stoprace
+            else:
+                yield messages.norace
+
+        if message.content.startswith(".join") or message.content.startswith(".enter"):
+            if race.state:
+                await race.join(message.author.name)
+                yield messages.joinrace(message.author.name)
+            else:
+                yield messages.norace
+
+        if message.content.startswith(".unjoin") or message.content.startswith(".quit") or message.content.startswith(".forfeit"):
+            if race.state:
+                await race.unjoin(message.author.name)
+                await race.check_remaining()
+
+                # yield from client.send_message(message.channel, messages.quitrace(message.author.name))
+                yield messages.quitrace(message.author.name)
+
+                is_done = await race.check_done()
+
+                if is_done == 0 and race.time is not None:
+                    await race.stoprace()
+                    # yield from client.send_message(message.channel, race.results())
+                    yield await race.results()
+
+                if len(race.runners) > 0 and is_done > 0:
+                    remaining = await race.check_remaining()
+
+                    if remaining == 0 and race.time is None:
+                        await race.persist()
+                        yield messages.countdown
+
+                        time.sleep(5)
+
+                        for i in range(1, 6)[::-1]:
+                            yield f"{i}"
+                            time.sleep(1)
+
+                        race.time = round(time.time())
+
+                        yield messages.go
+            else:
+                yield messages.norace
+
+        if message.content.startswith(".ready"):
+            if race.state:
+                if message.author.name in race.runners:
+                    await race.ready(message.author.name)
+
+                    remaining = await race.check_remaining()
+
+                    if remaining == 0:
+                        await race.persist()
+
+                        yield messages.countdown
+
+                        time.sleep(5)
+
+                        for i in range(1, 6)[::-1]:
+                            yield f"{i}"
+                            time.sleep(1)
+
+                        race.time = round(time.time())
+                        yield messages.go
+                    else:
+                        yield messages.remaining(race.remaining)
+                else:
+                    yield messages.notstarted
+            else:
+                yield messages.norace
+
+
+        if message.content.startswith(".done"):
+            if race.state:
+                if race.runners[message.author.name]['done']:
+                    yield messages.alreadydone
+                else:
+                    if race.time is not None:
+                        await race.done(message.author.name)
+
+                        if race.check_done() == 0:
+                            race.stoprace()
+                            yield race.results()
+                        else:
+                            yield messages.done(str(timedelta(seconds=race.runners[message.author.name]['time']-race.time)))
+                    else:
+                        yield messages.notstarted
+            else:
+                yield messages.norace
+
+        if message.content.startswith(".runners") or message.content.startswith(".list"):
+            if race.state:
+                for runner in race.runners:
+                    yield runner
+            else:
+                yield messages.norace
+
+        if message.content.startswith(".persist"):
+            await race.persist()
+
+        if message.content.startswith(".print"):
+            print_result = await race.print()
+            yield print_result
+
+        if message.content.startswith(".result"):
+            race_result = await race.results()
+            yield race_result
+
+        if message.content.startswith(".standard"):
+            yield messages.generating_seed
+            yield f"{seed.generate()}"
+
+        if message.content.startswith(".open"):
+            yield messages.generating_seed
+            yield f"{seed.generate(mode='open')}"
+
+        if message.content.startswith(".generate"):
+            yield messages.generating_seed
+
+            args = message.content.split(" ")
+            kwargs = {}
+
+            for arg in args:
+                if ".generate" not in arg:
+                    key, value = arg.split("=")
+                    kwargs[key] = value
+
+                    yield f"{seed.generate(**kwargs)}"
+
+        if message.content.startswith("."):
+            await race.persist()
