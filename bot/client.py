@@ -11,7 +11,7 @@ from bot.seed import SeedGenerator
 
 import aioredis
 
-race = {}
+all_races = {}
 messages = Messages()
 seed = SeedGenerator()
 
@@ -30,37 +30,45 @@ class Client(discord.Client):
         redis_host = os.environ.get('REDIS_HOST') or None
         redis_password = os.environ.get('REDIS_PASSWORD') or None
 
-        redis = await aioredis.create_redis('redis://localhost', loop=self.loop)
-        self.redis = redis
+        self.redis = await aioredis.create_redis('redis://localhost', loop=self.loop)
+
+        print(f'Database connection to redis established : {redis_host}')
 
     async def on_message(self, message):
         if message.author == self.user:
             return
 
-        for return_message in self.main_loop(message):
+        main_loop = self.main_loop(message)
+
+        async for return_message in main_loop:
             print(f"Returning message : {return_message}")
             await message.channel.send(return_message)
 
-    def main_loop(self, message):
-        # if message.channel.name not in race:
-            # race[message.channel.name] = Race(message.channel.name)
-            # race[message.channel.name].persist()
+    async def main_loop(self, message):
+        channel_name = message.channel.name
+
+        race = all_races.get(channel_name, None)
+
+        if not race:
+            race = Race(channel_name, self.redis)
+            await race.initialize(channel_name)
+            race.persist()
 
         if message.content.startswith(".races"):
-            races = {}
+            current_races = {}
 
-            for d, r in race.items():
-                races[d.name] = {
+            for d, r in all_races.items():
+                current_races[d.name] = {
                     "state": r.state,
                     "time": r.time,
                     "runners": {}
                 }
 
                 for runner in r.runners:
-                    races[d.name]['runners'][runner] = {
+                    current_races[d.name]['runners'][runner] = {
                         "ready": r.runners[runner]['ready'],
                         "done": r.runners[runner]['done'],
                         "time": r.runners[runner]['time'],
                     }
 
-            yield races
+            yield current_races

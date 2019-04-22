@@ -9,18 +9,13 @@ from datetime import timedelta
 
 class Race():
 
-    def __init__(self, channel):
-        redis_host = os.envrion.get('REDIS_PASSWORD') or '10.233.56.41'
-        print(f"Redis host : {redis_host}")
+    def __init__(self, channel, redis):
+        self.r = redis
 
-        redis_password = os.environ.get('REDIS_PASSWORD') or None
+    async def initialize(self, channel):
+        race = await self.r.get(channel)
 
-        if redis_password:
-            self.r = Redis(host=redis_host, port=6379, password=os.environ.get('REDIS_PASSWORD'))
-        else:
-            self.r = Redis(host=redis_host, port=6379)
-
-        race = self.r.get(channel)
+        self.channel = channel
 
         if race:
             race = json.loads(race)[channel]
@@ -31,16 +26,15 @@ class Race():
             self.state = False
             self.runners = {}
             self.time = None
-        self.channel = channel
 
-    def results(self):
+    async def results(self):
         result = []
         for runner in sorted(self.runners, key=operator.itemgetter(1)):
             result.append([runner, str(timedelta(seconds=self.runners[runner]['time']-self.time))])
 
         return "```{}```".format(tabulate(result, ["Runner", "Finish time"], tablefmt="grid"))
 
-    def persist(self):
+    async def persist(self):
         data = {
             self.channel: {
                 "state": self.state,
@@ -56,46 +50,46 @@ class Race():
                 "time": self.runners[runner]['time'],
             }
 
-        self.r.set(self.channel, json.dumps(data))
+        await self.r.set(self.channel, json.dumps(data))
 
-    def print(self):
+    async def print(self):
         return json.loads(self.r.get(self.channel))
 
-    def startrace(self):
+    async def startrace(self):
         self.state = True
         self.runners = {}
         self.time = None
 
-    def stoprace(self):
+    async def stoprace(self):
         self.state = False
         self.remaining = 0
         #self.runners = {}
         #self.time = None
 
-    def join(self, name):
+    async def join(self, name):
         self.runners[name] = {"ready": False, "done": False, "time": None}
 
-    def unjoin(self, name):
+    async def unjoin(self, name):
         del self.runners[name]
 
-    def check_done(self):
+    async def check_done(self):
         done = 0
         for runner in self.runners:
             if not self.runners[runner]['done']:
                 done += 1
         return done
 
-    def check_remaining(self):
+    async def check_remaining(self):
         self.remaining = 0
         for runner in self.runners:
             if not self.runners[runner]['ready']:
                 self.remaining += 1
         return self.remaining
 
-    def ready(self, name):
+    async def ready(self, name):
         self.runners[name]['ready'] = True
 
-    def done(self, name):
+    async def done(self, name):
         self.runners[name]['done'] = True
         self.runners[name]['time'] = round(time.time())
         self.persist()
