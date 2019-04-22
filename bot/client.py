@@ -27,10 +27,10 @@ class Client(discord.Client):
     async def on_ready(self):
         print(f'Logged on as {self.user}')
 
-        redis_host = os.environ.get('REDIS_HOST') or None
+        redis_host = os.environ.get('REDIS_HOST') or "redis://localhost"
         redis_password = os.environ.get('REDIS_PASSWORD') or None
 
-        self.redis = await aioredis.create_redis('redis://localhost', loop=self.loop)
+        self.redis = await aioredis.create_redis(redis_host, loop=self.loop, redis_password=redis_password)
 
         print(f'Database connection to redis established : {redis_host}')
 
