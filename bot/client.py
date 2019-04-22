@@ -37,6 +37,10 @@ class Client():
     @client.event
     @asyncio.coroutine
     def on_message(message):
+        for return_message in self.main_loop():
+            yield from client.send_message(message.channel, return_message)
+
+    def main_loop(message)
         if message.author.name == client.user:
             return
 
@@ -61,7 +65,7 @@ class Client():
                         "time": r.runners[runner]['time'],
                     }
 
-            yield from client.send_message(message.channel, races)
+            yield races
 
         if message.content.startswith(".startrace"):
             if race[message.channel.name].state:
