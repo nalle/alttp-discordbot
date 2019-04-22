@@ -37,7 +37,7 @@ class Client():
     @client.event
     @asyncio.coroutine
     def on_message(message):
-        for return_message in self.main_loop():
+        for return_message in self.main_loop(message):
             yield from client.send_message(message.channel, return_message)
 
     def main_loop(message)
