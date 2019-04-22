@@ -6,10 +6,22 @@ from redis import Redis
 from tabulate import tabulate
 from datetime import timedelta
 
+
 class Race():
+
     def __init__(self, channel):
-        self.r = Redis(host='10.233.56.41', port=6379, password=os.environ.get('REDIS_PASSWORD'))
+        redis_host = os.envrion.get('REDIS_PASSWORD') or '10.233.56.41'
+        print(f"Redis host : {redis_host}")
+
+        redis_password = os.environ.get('REDIS_PASSWORD') or None
+
+        if redis_password:
+            self.r = Redis(host=redis_host, port=6379, password=os.environ.get('REDIS_PASSWORD'))
+        else:
+            self.r = Redis(host=redis_host, port=6379)
+
         race = self.r.get(channel)
+
         if race:
             race = json.loads(race)[channel]
             self.state = race['state']
@@ -30,17 +42,22 @@ class Race():
 
     def persist(self):
         data = {
-                 self.channel: {
-                   "state": self.state, 
-                   "time": self.time,
-                   "runners": {
-                   }
-                 }
-               }
+            self.channel: {
+                "state": self.state,
+                "time": self.time,
+                "runners": {}
+            }
+        }
+
         for runner in self.runners:
-            data[self.channel]['runners'][runner] = {"ready": self.runners[runner]['ready'], "done": self.runners[runner]['done'], "time": self.runners[runner]['time']}
+            data[self.channel]['runners'][runner] = {
+                "ready": self.runners[runner]['ready'],
+                "done": self.runners[runner]['done'],
+                "time": self.runners[runner]['time'],
+            }
+
         self.r.set(self.channel, json.dumps(data))
-     
+
     def print(self):
         return json.loads(self.r.get(self.channel))
 
@@ -56,10 +73,10 @@ class Race():
         #self.time = None
 
     def join(self, name):
-        self.runners[name] = {"ready": False, "done": False, "time": None}        
+        self.runners[name] = {"ready": False, "done": False, "time": None}
 
     def unjoin(self, name):
-        del self.runners[name] 
+        del self.runners[name]
 
     def check_done(self):
         done = 0
@@ -74,7 +91,7 @@ class Race():
             if not self.runners[runner]['ready']:
                 self.remaining += 1
         return self.remaining
- 
+
     def ready(self, name):
         self.runners[name]['ready'] = True
 
