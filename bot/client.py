@@ -14,8 +14,10 @@ race = {}
 messages = Messages()
 seed = SeedGenerator()
 
+
 class Client():
-    def __init__(self): 
+
+    def __init__(self):
         print(messages.bootup)
 
     @client.event
@@ -35,7 +37,7 @@ class Client():
     @client.event
     @asyncio.coroutine
     def on_message(message):
-        if message.author.name == client.user: 
+        if message.author.name == client.user:
             return
 
         if message.channel.name not in race:
@@ -44,18 +46,23 @@ class Client():
 
         if message.content.startswith(".races"):
             races = {}
+
             for d, r in race.items():
-                races[d.name] = { 
-                                "state": r.state,
-                                "time": r.time,
-                                "runners": {
-                                }
-                               }
+                races[d.name] = {
+                    "state": r.state,
+                    "time": r.time,
+                    "runners": {}
+                }
+
                 for runner in r.runners:
-                    races[d.name]['runners'][runner] = {"ready": r.runners[runner]['ready'], "done": r.runners[runner]['done'], "time": r.runners[runner]['time']}
+                    races[d.name]['runners'][runner] = {
+                        "ready": r.runners[runner]['ready'],
+                        "done": r.runners[runner]['done'],
+                        "time": r.runners[runner]['time'],
+                    }
 
             yield from client.send_message(message.channel, races)
-    
+
         if message.content.startswith(".startrace"):
             if race[message.channel.name].state:
                 yield from client.send_message(message.channel, messages.alreadystarted)
@@ -66,10 +73,10 @@ class Client():
         if message.content.startswith(".stoprace"):
             if race[message.channel.name].state:
                 race[message.channel.name].stoprace()
-                yield from client.send_message(message.channel, messages.stoprace) 
+                yield from client.send_message(message.channel, messages.stoprace)
             else:
-                yield from client.send_message(message.channel, messages.norace) 
-    
+                yield from client.send_message(message.channel, messages.norace)
+
         if message.content.startswith(".join") or message.content.startswith(".enter"):
             if race[message.channel.name].state:
                 race[message.channel.name].join(message.author.name)
@@ -81,8 +88,9 @@ class Client():
             if race[message.channel.name].state:
                 race[message.channel.name].unjoin(message.author.name)
                 race[message.channel.name].check_remaining()
+
                 yield from client.send_message(message.channel, messages.quitrace(message.author.name))
-    
+
                 if race[message.channel.name].check_done() == 0 and race[message.channel.name].time is not None:
                     race[message.channel.name].stoprace()
                     yield from client.send_message(message.channel, race[message.channel.name].results())
@@ -102,13 +110,14 @@ class Client():
                         yield from client.send_message(message.channel, messages.go)
             else:
                 yield from client.send_message(message.channel, messages.norace)
-            
+
         if message.content.startswith(".ready"):
             if race[message.channel.name].state:
                 if message.author.name in race[message.channel.name].runners:
                     race[message.channel.name].ready(message.author.name)
                     if race[message.channel.name].check_remaining() == 0:
                         race[message.channel.name].persist()
+
                         yield from client.send_message(message.channel, messages.countdown)
 
                         time.sleep(5)
@@ -119,25 +128,25 @@ class Client():
 
                         race[message.channel.name].time = round(time.time())
                         yield from client.send_message(message.channel, messages.go)
-                    else:    
+                    else:
                         yield from client.send_message(message.channel, messages.remaining(race[message.channel.name].remaining))
                 else:
                     yield from client.send_message(message.channel, messages.notinrace)
             else:
                 yield from client.send_message(message.channel, messages.norace)
-                
-            
+
+
         if message.content.startswith(".done"):
             if race[message.channel.name].state:
-                if race[message.channel.name].runners[message.author.name]['done']: 
+                if race[message.channel.name].runners[message.author.name]['done']:
                     yield from client.send_message(message.channel, messages.alreadydone)
                 else:
                     if race[message.channel.name].time is not None:
-                        race[message.channel.name].done(message.author.name) 
+                        race[message.channel.name].done(message.author.name)
                         if race[message.channel.name].check_done() == 0:
                             race[message.channel.name].stoprace()
                             yield from client.send_message(message.channel, race[message.channel.name].results())
-                        else: 
+                        else:
                             yield from client.send_message(message.channel, messages.done(str(timedelta(seconds=race[message.channel.name].runners[message.author.name]['time']-race[message.channel.name].time))))
                     else:
                         yield from client.send_message(message.channel, messages.notstarted)
@@ -172,6 +181,7 @@ class Client():
             yield from client.send_message(message.channel, messages.generating_seed)
             args = message.content.split(" ")
             kwargs = {}
+
             for arg in args:
                 if ".generate" not in arg:
                     key, value = arg.split("=")
