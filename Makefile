@@ -1,7 +1,7 @@
 DATE=$(shell date +%s | shasum | cut -d' ' -f1)
 
 all:
-	docker build -t alttpbot .
+	docker build -t registry.gigabit.nu/alttpbot:${DATE} .
 
 deploy:
 	docker build -t registry.gigabit.nu/alttpbot:${DATE} .
