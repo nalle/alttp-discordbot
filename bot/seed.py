@@ -14,25 +14,38 @@ class SeedGenerator():
             'Accept': 'application/json, text/plain, */*',
             'Referer': 'https://alttpr.com/en/randomizer',
             'X-Requested-With': 'XMLHttpRequest',
-            'Connection': 'keep-alive' ,
+            'Connection': 'keep-alive',
         }
 
-    def generate(self, **kwargs):
+    def generate_open(self, **kwargs):
+        return self.generate_seed(variation='open')
+
+    def generate_standard(self, **kwargs):
+        return self.generate_seed(variation='standard')
+
+    def generate_spoiler(self, **kwargs):
+        return self.generate_seed(spoiler=True)
+
+    def generate_seed(self,
+        logic='NoGlitches', difficulty='normal', variation='standard', mode='ganon',
+        goal='ganon', weapons='randomized', tournament=True, spoiler=False, enemizer=False,
+        lang='en',
+    ):
         data = {
-            "logic":"NoGlitches",
-            "difficulty":"normal",
-            "variation":"none",
-            "mode":"standard",
-            "goal":"ganon",
-            "weapons":"randomized",
-            "tournament": True,
-            "spoilers": False,
-            "enemizer": False,
-            "lang":"en",
+            "logic": logic,
+            "difficulty": difficulty,
+            "variation": variation,
+            "mode": mode,
+            "goal": goal,
+            "weapons": weapons,
+            "tournament": tournament,
+            "spoilers": spoiler,
+            "enemizer": enemizer,
+            "lang": lang,
         }
 
-        for key, value in kwargs.items():
-            data[key] = value
+        # for key, value in kwargs.items():
+        #     data[key] = value
 
         r = requests.get("https://alttpr.com/seed", data=json.dumps(data), headers=self.headers)
 

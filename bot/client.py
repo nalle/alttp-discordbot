@@ -194,11 +194,11 @@ class Client(discord.Client):
 
         if message.content.startswith(".standard"):
             yield messages.generating_seed
-            yield f"{seed.generate()}"
+            yield f"{seed.generate_standard()}"
 
         if message.content.startswith(".open"):
             yield messages.generating_seed
-            yield f"{seed.generate(mode='open')}"
+            yield f"{seed.generate_open()}"
 
         if message.content.startswith(".generate"):
             yield messages.generating_seed
@@ -211,7 +211,7 @@ class Client(discord.Client):
                     key, value = arg.split("=")
                     kwargs[key] = value
 
-                    yield f"{seed.generate(**kwargs)}"
+                    yield f"{seed.generate_seed(**kwargs)}"
 
         if message.content.startswith("."):
             await race.persist()
