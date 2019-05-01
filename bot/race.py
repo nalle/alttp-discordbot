@@ -22,10 +22,12 @@ class Race():
             self.state = race['state']
             self.runners = race['runners']
             self.time = race['time']
+            self.type = race['type']
         else:
             self.state = False
             self.runners = {}
             self.time = None
+            self.type = ""
 
     async def results(self):
         result = []
@@ -39,7 +41,8 @@ class Race():
             self.channel: {
                 "state": self.state,
                 "time": self.time,
-                "runners": {}
+                "runners": {},
+                "type": self.type,
             }
         }
 
@@ -56,18 +59,28 @@ class Race():
         return json.loads(self.r.get(self.channel))
 
     async def startrace(self):
+        """
+        :seed_type:
+            should be either 'standard', 'open', 'spoiler'
+        """
         self.state = True
         self.runners = {}
         self.time = None
+        self.type = ""
 
     async def stoprace(self):
         self.state = False
         self.remaining = 0
         #self.runners = {}
         #self.time = None
+        self.type = ""
 
     async def join(self, name):
-        self.runners[name] = {"ready": False, "done": False, "time": None}
+        self.runners[name] = {
+            "ready": False,
+            "done": False,
+            "time": None,
+        }
 
     async def unjoin(self, name):
         del self.runners[name]
@@ -93,5 +106,3 @@ class Race():
         self.runners[name]['done'] = True
         self.runners[name]['time'] = round(time.time())
         self.persist()
-
-

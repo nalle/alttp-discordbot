@@ -15,6 +15,11 @@ all_races = {}
 messages = Messages()
 seed = SeedGenerator()
 
+# Allow for devs to speedup the timer execution time if needed
+if 'DEV' in os.environ:
+    DEV_MULTIPLIER = 0.0083
+else:
+    DEV_MULTIPLIER = 1
 
 
 class Client(discord.Client):
@@ -99,32 +104,31 @@ class Client(discord.Client):
                 await race.unjoin(message.author.name)
                 await race.check_remaining()
 
-                # yield from client.send_message(message.channel, messages.quitrace(message.author.name))
                 yield messages.quitrace(message.author.name)
 
                 is_done = await race.check_done()
 
                 if is_done == 0 and race.time is not None:
                     await race.stoprace()
-                    # yield from client.send_message(message.channel, race.results())
                     yield await race.results()
 
                 if len(race.runners) > 0 and is_done > 0:
                     remaining = await race.check_remaining()
 
                     if remaining == 0 and race.time is None:
-                        await race.persist()
-                        yield messages.countdown
+                        if race.type in ('open', 'standard', 'custom'):
+                            await race.persist()
+                            yield messages.countdown
 
-                        time.sleep(5)
+                            await asyncio.sleep(5)
 
-                        for i in range(1, 6)[::-1]:
-                            yield f"{i}"
-                            time.sleep(1)
+                            for i in range(5, 0, -1):
+                                yield f"{i}"
+                                await asyncio.sleep(1)
 
-                        race.time = round(time.time())
+                            race.time = round(time.time())
 
-                        yield messages.go
+                            yield messages.go
             else:
                 yield messages.norace
 
@@ -136,25 +140,62 @@ class Client(discord.Client):
                     remaining = await race.check_remaining()
 
                     if remaining == 0:
-                        await race.persist()
+                        if race.type in ('open', 'standard', 'custom'):
+                            await race.persist()
 
-                        yield messages.countdown
+                            yield messages.countdown
 
-                        time.sleep(5)
+                            await asyncio.sleep(5)
 
-                        for i in range(1, 6)[::-1]:
-                            yield f"{i}"
-                            time.sleep(1)
+                            for i in range(5, 0, -1):
+                                yield f"{i}"
+                                await asyncio.sleep(1)
 
-                        race.time = round(time.time())
-                        yield messages.go
+                            race.time = round(time.time())
+                            yield messages.go
+                        elif race.type in ('spoiler', ):
+                            race.time = round(time.time())
+                            await race.persist()
+
+                            yield "Starting planning phase spoiler log race. Download the spoiler log file and you have 30 minutes to study it"
+                            await asyncio.sleep(1)
+                            yield "Starting timer in 5 seconds"
+
+                            for i in range(5, 0, -1):
+                                yield f"{i}"
+                                await asyncio.sleep(1)
+
+                            await asyncio.sleep(1)
+
+                            yield "30 minutes left of planning phase"
+
+                            await asyncio.sleep(int(600 * DEV_MULTIPLIER))
+                            yield "20 minutes left of planning phase"
+
+                            await asyncio.sleep(int(600 * DEV_MULTIPLIER))
+                            yield "10 minutes left of planning phase"
+
+                            await asyncio.sleep(int(300 * DEV_MULTIPLIER))
+                            yield "5 minutes left of planning phase"
+
+                            await asyncio.sleep(int(240 * DEV_MULTIPLIER))
+                            yield "60 seconds left of planning phase"
+
+                            await asyncio.sleep(int(50 * DEV_MULTIPLIER))
+                            for i in range(5, 0, -1):
+                                yield f"{i}"
+                                await asyncio.sleep(1)
+
+                            yield "Planning phase is now completed. Start your Race Rom!"
+                            race.time = round(time.time())
+                            await asyncio.sleep(1)
+                            yield messages.go
                     else:
                         yield messages.remaining(race.remaining)
                 else:
                     yield messages.notstarted
             else:
                 yield messages.norace
-
 
         if message.content.startswith(".done"):
             if race.state:
@@ -195,10 +236,20 @@ class Client(discord.Client):
         if message.content.startswith(".standard"):
             yield messages.generating_seed
             yield f"{seed.generate_standard()}"
+            race.type = "standard"
+            await race.persist()
 
         if message.content.startswith(".open"):
             yield messages.generating_seed
             yield f"{seed.generate_open()}"
+            race.type = "open"
+            await race.persist()
+
+        if message.content.startswith(".spoiler"):
+            yield messages.generating_seed
+            yield f"{seed.generate_spoiler()}"
+            race.type = "spoiler"
+            await race.persist()
 
         if message.content.startswith(".generate"):
             yield messages.generating_seed
@@ -212,6 +263,9 @@ class Client(discord.Client):
                     kwargs[key] = value
 
                     yield f"{seed.generate_seed(**kwargs)}"
+
+            race.type = "custom"
+            await race.persist()
 
         if message.content.startswith("."):
             await race.persist()

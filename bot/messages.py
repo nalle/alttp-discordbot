@@ -36,7 +36,7 @@ class Messages():
     @property
     def go(self):
         return "GO GO GO"
-    
+
     def remaining(self, num):
         return "My dude, we're so pumped! Waiting for {} players".format(num)
 
