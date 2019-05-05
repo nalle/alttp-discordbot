@@ -4,6 +4,19 @@ import requests
 
 class SeedGenerator():
 
+    valid_seed_commands = {
+        'logic': ['NoGlitches'],
+        'difficulty': ['normal', 'hard', 'expert'],
+        'variation': ['none'],
+        'mode': ['ganon'],
+        'goal': ['ganon'],
+        'weapons': ['randomized'],
+        'tournament': [True, False],
+        'spoiler': [True, False],
+        'enemizer': [True, False],
+        'lang': ['en']
+    }
+
     def __init__(self):
         self.headers = {
             'Origin': 'https://alttpr.com',
@@ -31,6 +44,9 @@ class SeedGenerator():
         goal='ganon', weapons='randomized', tournament=True, spoiler=False, enemizer=False,
         lang='en',
     ):
+        if logic not in valid_seed_commands['logic']:
+            raise Exception(f"Invalid argument '{logic}' for argument 'logic' when generating a seed")
+
         data = {
             "logic": logic,
             "difficulty": difficulty,
