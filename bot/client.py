@@ -46,7 +46,7 @@ class Client(discord.Client):
         main_loop = self.main_loop(message)
 
         async for return_message in main_loop:
-            print(f"Returning message : {return_message}")
+            print(f" - Returning message : {return_message}")
             await message.channel.send(return_message)
 
     async def main_loop(self, message):
@@ -86,134 +86,19 @@ class Client(discord.Client):
                 yield messages.startrace
 
         if message.content.startswith(".stoprace"):
-            if race.state:
-                await race.stoprace()
-                yield messages.stoprace
-            else:
+            if not race.state:
                 yield messages.norace
+                return
 
-        if message.content.startswith(".join") or message.content.startswith(".enter"):
-            if race.state:
-                await race.join(message.author.name)
-                yield messages.joinrace(message.author.name)
-            else:
-                yield messages.norace
+            await race.stoprace()
+            yield messages.stoprace
 
-        if message.content.startswith(".unjoin") or message.content.startswith(".quit") or message.content.startswith(".forfeit"):
-            if race.state:
-                await race.unjoin(message.author.name)
-                await race.check_remaining()
-
-                yield messages.quitrace(message.author.name)
-
-                is_done = await race.check_done()
-
-                if is_done == 0 and race.time is not None:
-                    await race.stoprace()
-                    yield await race.results()
-
-                if len(race.runners) > 0 and is_done > 0:
-                    remaining = await race.check_remaining()
-
-                    if remaining == 0 and race.time is None:
-                        if race.type in ('open', 'standard', 'custom'):
-                            await race.persist()
-                            yield messages.countdown
-
-                            await asyncio.sleep(5)
-
-                            for i in range(5, 0, -1):
-                                yield f"{i}"
-                                await asyncio.sleep(1)
-
-                            race.time = round(time.time())
-
-                            yield messages.go
-            else:
-                yield messages.norace
-
-        if message.content.startswith(".ready"):
-            if race.state:
-                if message.author.name in race.runners:
-                    await race.ready(message.author.name)
-
-                    remaining = await race.check_remaining()
-
-                    if remaining == 0:
-                        if race.type in ('open', 'standard', 'custom'):
-                            await race.persist()
-
-                            yield messages.countdown
-
-                            await asyncio.sleep(5)
-
-                            for i in range(5, 0, -1):
-                                yield f"{i}"
-                                await asyncio.sleep(1)
-
-                            race.time = round(time.time())
-                            yield messages.go
-                        elif race.type in ('spoiler', ):
-                            race.time = round(time.time())
-                            await race.persist()
-
-                            yield "Starting planning phase spoiler log race. Download the spoiler log file and you have 30 minutes to study it"
-                            await asyncio.sleep(1)
-                            yield "Starting timer in 5 seconds"
-
-                            for i in range(5, 0, -1):
-                                yield f"{i}"
-                                await asyncio.sleep(1)
-
-                            await asyncio.sleep(1)
-
-                            yield "30 minutes left of planning phase"
-
-                            await asyncio.sleep(int(600 * DEV_MULTIPLIER))
-                            yield "20 minutes left of planning phase"
-
-                            await asyncio.sleep(int(600 * DEV_MULTIPLIER))
-                            yield "10 minutes left of planning phase"
-
-                            await asyncio.sleep(int(300 * DEV_MULTIPLIER))
-                            yield "5 minutes left of planning phase"
-
-                            await asyncio.sleep(int(240 * DEV_MULTIPLIER))
-                            yield "60 seconds left of planning phase"
-
-                            await asyncio.sleep(int(50 * DEV_MULTIPLIER))
-                            for i in range(5, 0, -1):
-                                yield f"{i}"
-                                await asyncio.sleep(1)
-
-                            yield "Planning phase is now completed. Start your Race Rom!"
-                            race.time = round(time.time())
-                            await asyncio.sleep(1)
-                            yield messages.go
-                    else:
-                        yield messages.remaining(race.remaining)
-                else:
-                    yield messages.notstarted
-            else:
-                yield messages.norace
-
-        if message.content.startswith(".done"):
-            if race.state:
-                if race.runners[message.author.name]['done']:
-                    yield messages.alreadydone
-                else:
-                    if race.time is not None:
-                        await race.done(message.author.name)
-
-                        if race.check_done() == 0:
-                            race.stoprace()
-                            yield race.results()
-                        else:
-                            yield messages.done(str(timedelta(seconds=race.runners[message.author.name]['time']-race.time)))
-                    else:
-                        yield messages.notstarted
-            else:
-                yield messages.norace
+        #
+        # Send the command to the race to allow for it to process and to run any specific action for the given race type
+        #
+        # await race.parse_message(message.content)
+        async for return_message in race.parse_message(message):
+            yield return_message
 
         if message.content.startswith(".runners") or message.content.startswith(".list"):
             if race.state:
@@ -221,6 +106,9 @@ class Client(discord.Client):
                     yield runner
             else:
                 yield messages.norace
+
+        # if message.content.startswith(".msgme"):
+        #     await message.author.send('hello...', file=discord.File('foobar.txt', 'foobar.txt'))
 
         if message.content.startswith(".persist"):
             await race.persist()
