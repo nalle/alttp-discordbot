@@ -6,7 +6,7 @@ import time
 from datetime import timedelta
 from bot.runner import Runner
 from bot.race import Race
-from bot.messages import Messages
+from bot.messages import Messages, reply_channel, message_mapping, reply_channel_string
 from bot.seed import SeedGenerator
 
 import aioredis
@@ -27,7 +27,7 @@ class Client(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        print(messages.bootup)
+        print(message_mapping['bootup'])
 
     async def on_ready(self):
         print(f'Logged on as {self.user}')
@@ -43,13 +43,6 @@ class Client(discord.Client):
         if message.author == self.user:
             return
 
-        main_loop = self.main_loop(message)
-
-        async for return_message in main_loop:
-            print(f" - Returning message : {return_message}")
-            await message.channel.send(return_message)
-
-    async def main_loop(self, message):
         channel_name = message.channel.name
 
         race = all_races.get(channel_name, None)
@@ -76,84 +69,86 @@ class Client(discord.Client):
                         "time": r.runners[runner]['time'],
                     }
 
-            yield current_races
+            await reply_channel_string(message, current_races)
 
         if message.content.startswith(".startrace"):
             if race.state:
-                yield messages.alreadystarted
+                await reply_channel(message, 'alreadystarted')
             else:
-                await race.startrace()
-                yield messages.startrace
+                race.startrace()
+                await reply_channel(message, 'startrace')
 
         if message.content.startswith(".stoprace"):
             if not race.state:
-                yield messages.norace
+                await reply_channel(message, 'norace')
                 return
 
             await race.stoprace()
-            yield messages.stoprace
+            await reply_channel(message, 'stoprace')
 
         #
         # Send the command to the race to allow for it to process and to run any specific action for the given race type
         #
-        # await race.parse_message(message.content)
-        async for return_message in race.parse_message(message):
-            yield return_message
+        await race.parse_message(message)
 
         if message.content.startswith(".runners") or message.content.startswith(".list"):
             if race.state:
-                for runner in race.runners:
-                    yield runner
-            else:
-                yield messages.norace
 
-        # if message.content.startswith(".msgme"):
-        #     await message.author.send('hello...', file=discord.File('foobar.txt', 'foobar.txt'))
+                runners = ""
+                for runner in race.runners:
+                    runners += runner + "\n"
+
+                await reply_channel_string(message, runners)
+            else:
+                await reply_channel(message, 'norace')
 
         if message.content.startswith(".persist"):
             await race.persist()
 
         if message.content.startswith(".print"):
             print_result = await race.print()
-            yield print_result
+            await reply_channel_string(message, print_result)
 
         if message.content.startswith(".result"):
             race_result = await race.results()
-            yield race_result
+            await reply_channel_string(message, race_result)
 
-        if message.content.startswith(".standard"):
-            yield messages.generating_seed
-            yield f"{seed.generate_standard()}"
-            race.type = "standard"
-            await race.persist()
+        # if message.content.startswith(".standard"):
+        #     yield messages.generating_seed
+        #     yield f"{seed.generate_standard()}"
+        #     race.type = "standard"
+        #     await race.persist()
 
-        if message.content.startswith(".open"):
-            yield messages.generating_seed
-            yield f"{seed.generate_open()}"
-            race.type = "open"
-            await race.persist()
+        # if message.content.startswith(".open"):
+        #     yield messages.generating_seed
+        #     yield f"{seed.generate_open()}"
+        #     race.type = "open"
+        #     await race.persist()
 
-        if message.content.startswith(".spoiler"):
-            yield messages.generating_seed
-            yield f"{seed.generate_spoiler()}"
-            race.type = "spoiler"
-            await race.persist()
+        # if message.content.startswith(".spoiler"):
+        #     yield messages.generating_seed
+        #     yield f"{seed.generate_spoiler()}"
+        #     race.type = "spoiler"
+        #     await race.persist()
 
-        if message.content.startswith(".generate"):
-            yield messages.generating_seed
+        # if message.content.startswith(".generate"):
+        #     yield messages.generating_seed
 
-            args = message.content.split(" ")
-            kwargs = {}
+        #     args = message.content.split(" ")
+        #     kwargs = {}
 
-            for arg in args:
-                if ".generate" not in arg:
-                    key, value = arg.split("=")
-                    kwargs[key] = value
+        #     for arg in args:
+        #         if ".generate" not in arg:
+        #             key, value = arg.split("=")
+        #             kwargs[key] = value
 
-                    yield f"{seed.generate_seed(**kwargs)}"
+        #             yield f"{seed.generate_seed(**kwargs)}"
 
-            race.type = "custom"
-            await race.persist()
+        #     race.type = "custom"
+        #     await race.persist()
 
         if message.content.startswith("."):
             await race.persist()
+
+        # if message.content.startswith(".msgme"):
+        #     await message.author.send('hello...', file=discord.File('foobar.txt', 'foobar.txt'))

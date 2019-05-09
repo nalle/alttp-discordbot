@@ -54,3 +54,30 @@ class Messages():
     @property
     def generating_seed(self):
         return "Imma let you finish but there's a seed coming your way soon"
+
+
+message_mapping = {
+    'bootup': 'ALTTP Racebot is booting up',
+    'login_successful': 'Login successful',
+    'startrace': "A race! Nice my dude, type .join to participate!",
+    'alreadystarted': "My dude :( a race is already started!",
+    'unknown_race_type': "ERROR: Unknown race type set on race...",
+    'norace': "Duuuude, no race is running.. better got up on that",
+    'player_joinrace': "Welcome my dude {name}!",
+    'quitrace': "Sad to see you go my dude {name}!",
+    'countdown': "Aww yeah! Lets get this party started! Counting down from 10..",
+    'go': "GO GO GO",
+    'remaining': "My dude, we're so pumped! Waiting for {num} players",
+    'done': "Dude, {time}! SICK, gg wp",
+    'spoiler_starting_planning': "Starting planning phase spoiler log race. Download the spoiler log file and you have 30 minutes to study it",
+    'spoiler_starting_timer': "Starting timer in 5 seconds",
+}
+
+
+async def reply_channel(message_instance, message_key, **kwargs):
+    print("Printing message : ", message_instance, message_key, kwargs)
+    await message_instance.channel.send(message_mapping[message_key].format(**kwargs))
+
+async def reply_channel_string(message_instance, message_string, **kwargs):
+    print("Printing message string : ", message_instance, kwargs)
+    await message_instance.channel.send(message_string)

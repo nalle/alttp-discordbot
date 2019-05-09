@@ -1,11 +1,13 @@
-import time
+import asyncio
 import json
 import operator
 import os
+import time
+from bot.messages import Messages, reply_channel, message_mapping, reply_channel_string
+from datetime import timedelta
 from redis import Redis
 from tabulate import tabulate
-from datetime import timedelta
-from bot.messages import Messages
+
 
 messages = Messages()
 
@@ -74,8 +76,8 @@ class Race():
     async def stoprace(self):
         self.state = False
         self.remaining = 0
-        #self.runners = {}
-        #self.time = None
+        # self.runners = {}
+        # self.time = None
         self.type = "custom"
 
     async def join(self, name):
@@ -108,192 +110,198 @@ class Race():
     async def done(self, name):
         self.runners[name]['done'] = True
         self.runners[name]['time'] = round(time.time())
-        self.persist()
+        await self.persist()
 
     async def parse_message(self, message):
-        if self.type == 'open' or self.type == 'custom':
-            # await self.parse_message_open_race(message)
-            async for return_msg in self.parse_message_open_race(message):
-                yield return_msg
+        print(message, message.content, self.type)
+
+        if self.type == 'open':
+            await self.parse_message_open_race(message)
+        elif self.type == 'custom':
+            await self.parse_message_open_race(message)
         elif self.type == 'standard':
-            # await self.parse_message_standard_race(message)
-            async for return_msg in self.parse_message_standard_race(message):
-                yield return_msg
+            await self.parse_message_standard_race(message)
         elif self.type == 'spoiler':
-            # await self.parse_message_spoiler_race(message)
-            async for return_msg in self.parse_message_spoiler_race(message):
-                yield return_msg
+            await self.parse_message_spoiler_race(message)
         else:
-            yield "ERROR: Unknown race type set on race..."
+            await reply_channel(message, 'unkonwn_race_type')
 
     async def parse_message_open_race(self, message):
         runner_name = message.author.name
 
+        print("parsing open race mssage", message.content)
+
         if message.content.startswith('.join') or message.content.startswith('.enter'):
-            await self._join_race(runner_name)
+            print("Joining race...")
+            await self._join_race(message, runner_name)
 
         if message.content.startswith(".unjoin") or message.content.startswith(".quit") or message.content.startswith(".forfeit"):
-            await self._unjoin_race(runner_name)
+            await self._unjoin_race(message, runner_name)
 
         if message.content.startswith(".done"):
-            await self._done(runner_name)
+            await self._done(message, runner_name)
 
         if message.content.startswith(".ready"):
-            if runner_name not in race.runners:
-                yield messages.notstarted
+            if runner_name not in self.runners:
+                await reply_channel(message, 'notstarted')
                 return
 
-            await self._ready_basic(runner_name)
+            await self._ready_basic(message, runner_name)
 
     async def parse_message_standard_race(self, message):
         runner_name = message.author.name
 
         if message.content.startswith('.join') or message.content.startswith('.enter'):
-            await self._join_race(runner_name)
+            await self._join_race(message, runner_name)
 
         if message.content.startswith(".unjoin") or message.content.startswith(".quit") or message.content.startswith(".forfeit"):
-            await self._unjoin_race(runner_name)
+            await self._unjoin_race(message, runner_name)
 
         if message.content.startswith(".done"):
-            await self._done(runner_name)
+            await self._done(message, runner_name)
 
         if message.content.startswith(".ready"):
-            if runner_name not in race.runners:
-                yield messages.notstarted
+            if runner_name not in self.runners:
+                await reply_channel(message, 'notstarted')
                 return
 
-            await self._ready_basic(runner_name)
+            await self._ready_basic(message, runner_name)
 
     async def parse_message_spoiler_raace(self, message):
         runner_name = message.author.name
 
         if message.content.startswith('.join') or message.content.startswith('.enter'):
-            await self._join_race(runner_name)
+            await self._join_race(message, runner_name)
 
         if message.content.startswith(".unjoin") or message.content.startswith(".quit") or message.content.startswith(".forfeit"):
-            await self._unjoin_race(runner_name)
+            await self._unjoin_race(message, runner_name)
 
         if message.content.startswith(".done"):
-            await self._done(runner_name)
+            await self._done(message, runner_name)
 
         if message.content.startswith(".ready"):
-            if runner_name not in race.runners:
-                yield messages.notstarted
+            if runner_name not in self.runners:
+                await reply_channel(message, 'notstarted')
                 return
 
-            await self._ready_spoiler(runner_name)
+            await self._ready_spoiler(message, runner_name)
 
-    async def _join_race(self, runner_name):
-        await race.join(runner_name)
-        yield messages.joinrace(runner_name)
+    async def _join_race(self, message, runner_name):
+        await self.join(runner_name)
+        await reply_channel(message, 'player_joinrace', name=runner_name)
 
-    async def _unjoin_race(self, runner_name):
-        await race.unjoin(message.author.name)
-        await race.check_remaining()
+    async def _unjoin_race(self, message, runner_name):
+        await self.unjoin(message.author.name)
+        await self.check_remaining()
 
-        yield messages.quitrace(message.author.name)
+        await reply_channel(message, 'player_joinrace', name=message.author.name)
 
-        is_done = await race.check_done()
+        is_done = await self.check_done()
 
-        if is_done == 0 and race.time is not None:
-            await race.stoprace()
-            yield await race.results()
+        if is_done == 0 and self.time is not None:
+            await self.stoprace()
+            race_result = await self.results()
+            await reply_channel_string(message, race_result)
 
-        if len(race.runners) > 0 and is_done > 0:
-            remaining = await race.check_remaining()
+        if len(self.runners) > 0 and is_done > 0:
+            remaining = await self.check_remaining()
 
-            if remaining == 0 and race.time is None:
-                if race.type in ('open', 'standard', 'custom'):
-                    await race.persist()
-                    yield messages.countdown
+            if remaining == 0 and self.time is None:
+                if self.type in ('open', 'standard', 'custom'):
+                    await self.persist()
+                    await reply_channel(message, 'countdown')
 
                     await asyncio.sleep(5)
 
                     for i in range(5, 0, -1):
-                        yield f"{i}"
+                        await reply_channel_string(message, f"{i}")
                         await asyncio.sleep(1)
 
-                    race.time = round(time.time())
+                    self.time = round(time.time())
 
-                    yield messages.go
+                    await reply_channel(message, 'go')
 
-    async def _done(self, runner_name):
-        if race.runners[message.author.name]['done']:
-            yield messages.alreadydone
+    async def _done(self, message, runner_name):
+        if self.runners[message.author.name]['done']:
+            await reply_channel(message, 'alreadydone')
         else:
-            if race.time is not None:
-                await race.done(message.author.name)
+            if self.time is not None:
+                await self.done(message.author.name)
 
-                if race.check_done() == 0:
-                    race.stoprace()
-                    yield race.results()
+                is_done = await self.check_done()
+                if is_done == 0:
+                    await self.stoprace()
+                    result = await self.results()
+                    await reply_channel_string(message, result)
                 else:
-                    yield messages.done(str(timedelta(seconds=race.runners[message.author.name]['time']-race.time)))
+                    await reply_channel(message, 'done', time=str(timedelta(
+                        seconds=self.runners[message.author.name]['time'] - self.time
+                    )))
             else:
-                yield messages.notstarted
+                await reply_channel(message, 'notstarted')
 
-    async def _ready_basic(self, runner_name):
-        if runner_name in race.runners:
-            await race.ready(message.author.name)
+    async def _ready_basic(self, message, runner_name):
+        if runner_name in self.runners:
+            await self.ready(message.author.name)
 
-            remaining = await race.check_remaining()
+            remaining = await self.check_remaining()
 
             if remaining != 0:
-                yield messages.remaining(race.remaining)
+                await reply_channel(message, 'remaining')
                 return
 
-            if race.type in ('open', 'standard', 'custom'):
-                await race.persist()
+            if self.type in ('open', 'standard', 'custom'):
+                await self.persist()
 
-                yield messages.countdown
+                await reply_channel(message, 'countdown')
 
                 await asyncio.sleep(5)
 
                 for i in range(5, 0, -1):
-                    yield f"{i}"
+                    await reply_channel_string(message, f"{i}")
                     await asyncio.sleep(1)
 
-                race.time = round(time.time())
-                yield messages.go
+                self.time = round(time.time())
+                await reply_channel(message, 'go')
 
-    async def _ready_spoiler(self, runner_name):
+    async def _ready_spoiler(self, message, runner_name):
         if remaining != 0:
-            yield messages.remaining(race.remaining)
+            await reply_channel_string(message, self.remaining)
             return
 
-        race.time = round(time.time())
-        await race.persist()
+        self.time = round(time.time())
+        await self.persist()
 
-        yield "Starting planning phase spoiler log race. Download the spoiler log file and you have 30 minutes to study it"
+        await reply_channel(message, 'spoiler_starting_planning')
         await asyncio.sleep(1)
-        yield "Starting timer in 5 seconds"
+        await reply_channel(message, 'spoiler_starting_timer')
 
         for i in range(5, 0, -1):
-            yield f"{i}"
+            await reply_channel_string(message, f"{i}")
             await asyncio.sleep(1)
 
         await asyncio.sleep(1)
 
-        yield "30 minutes left of planning phase"
+        await reply_channel_string(message, "30 minutes left of planning phase")
 
         await asyncio.sleep(int(600 * DEV_MULTIPLIER))
-        yield "20 minutes left of planning phase"
+        await reply_channel_string(message, "20 minutes left of planning phase")
 
         await asyncio.sleep(int(600 * DEV_MULTIPLIER))
-        yield "10 minutes left of planning phase"
+        await reply_channel_string(message, "10 minutes left of planning phase")
 
         await asyncio.sleep(int(300 * DEV_MULTIPLIER))
-        yield "5 minutes left of planning phase"
+        await reply_channel_string(message, "5 minutes left of planning phase")
 
         await asyncio.sleep(int(240 * DEV_MULTIPLIER))
-        yield "60 seconds left of planning phase"
+        await reply_channel_string(message, "60 seconds left of planning phase")
 
         await asyncio.sleep(int(50 * DEV_MULTIPLIER))
         for i in range(5, 0, -1):
-            yield f"{i}"
+            await reply_channel_string(message, f"{i}")
             await asyncio.sleep(1)
 
-        yield "Planning phase is now completed. Start your Race Rom!"
-        race.time = round(time.time())
+        await reply_channel_string(message, "Planning phase is now completed. Start your Race Rom!")
+        self.time = round(time.time())
         await asyncio.sleep(1)
-        yield messages.go
+        await reply_channel(message, 'go')
