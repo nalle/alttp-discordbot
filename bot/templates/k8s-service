@@ -1,0 +1,17 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ name }}
+  labels:
+    app: {{ name }}
+spec:
+  selector:
+    app: {{ name }}
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: {{ port }}
+    targetPort: 38281
+  externalIPs:
+  - 212.63.208.215

@@ -1,0 +1,26 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ name }}
+spec:
+  ttlSecondsAfterFinished: 0
+  template:
+    spec:
+      containers:
+      - name: {{ name }}
+        image: registry.gigabit.nu/multiworld-server:latest
+        imagePullPolicy: Always
+        command: ["python3", "/opt/ALttPEntranceRandomizer/EntranceRandomizer.py", "--rom", "/opt/ALttPEntranceRandomizer/alttp.sfc", {% for argument in arguments %}"{{argument}}"{% if not loop.last -%}, {% endif -%}{% endfor -%}]
+        volumeMounts:
+          - mountPath: /multiworld/
+            name: multiworld-storage
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: regcred
+      volumes:
+        - name: multiworld-storage
+          persistentVolumeClaim:
+            claimName: multiworld-claim
+  backoffLimit: 1
+

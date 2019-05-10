@@ -1,0 +1,32 @@
+---
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ name }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ name }}
+    spec:
+      containers:
+        - name: {{ name }}
+          image: registry.gigabit.nu/multiworld-server:latest
+          imagePullPolicy: Always
+          command: ["python3", "/opt/ALttPEntranceRandomizer/MultiServer.py", "--host", "0.0.0.0", "--password", "{{ password }}", "--multidata", "/multiworld/{{ multidata }}"]
+          volumeMounts:
+            - mountPath: /multiworld/
+              name: multiworld-storage
+          ports:
+            - containerPort: 38281
+      imagePullSecrets:
+        - name: regcred
+      volumes:
+        - name: multiworld-storage
+          persistentVolumeClaim:
+            claimName: multiworld-claim
+

@@ -2,3 +2,8 @@ requests
 discord.py>=1.0.1
 tabulate
 redis
+rq
+jinja2
+xkcdpass
+ruamel.yaml
+kubernetes

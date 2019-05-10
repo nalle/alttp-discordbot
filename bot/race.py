@@ -7,8 +7,9 @@ from bot.messages import Messages, reply_channel, message_mapping, reply_channel
 from datetime import timedelta
 from redis import Redis
 from tabulate import tabulate
-
-
+from rq import Queue
+from worker import conn
+from multiworld import Multiworld
 messages = Messages()
 
 
@@ -195,6 +196,13 @@ class Race():
             await self._join_race(message, runner_name)
 
         if message.content.startswith('.generate'):
+            multiworld = Multiworld()
+
+            q = Queue(connection=conn)
+            result = q.enqueue(multiworld.create_multiworld, multi=2, mode="open", shuffle="vanilla", goal="ganon")
+            while result.result is None:
+                await asyncio.sleep(1)
+
             # TODO: RQ code goes here...
 
             # TODO: Enter while wait loop to wait for RQ job to finish
