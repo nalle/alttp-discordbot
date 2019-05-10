@@ -1,4 +1,4 @@
-from k8s import Kubernetes 
+from bot.k8s import Kubernetes 
 from jinja2 import Template
 import xkcdpass.xkcd_password as xp
 import datetime

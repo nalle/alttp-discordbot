@@ -121,6 +121,7 @@ class Kubernetes():
         for service in self.list_services().to_dict()['items']:
             if service['metadata']['creation_timestamp'] < datetime.datetime.now(service['metadata']['creation_timestamp'].tzinfo)-datetime.timedelta(seconds=ttl):
                 if "multiworld-server" in service['metadata']['name']:
+                    print("Deleteing {}".service(pods['metadata']['name']))
                     self.delete_service(service['metadata']['name'])
                     retvar = True
     
@@ -131,7 +132,7 @@ class Kubernetes():
         for pod in self.list_pods().to_dict()['items']:
             if pod['metadata']['creation_timestamp'] < datetime.datetime.now(pod['metadata']['creation_timestamp'].tzinfo)-datetime.timedelta(seconds=ttl):
                 if "multiworld-server" in pod['metadata']['name']:
-                    return pod
+                    print("Deleteing {}".format(pods['metadata']['name']))
                     self.delete_pod(pod['metadata']['name'])
                     retvar = True
     
@@ -142,6 +143,7 @@ class Kubernetes():
         for replica_set in self.list_replica_sets().to_dict()['items']:
             if replica_set['metadata']['creation_timestamp'] < datetime.datetime.now(replica_set['metadata']['creation_timestamp'].tzinfo)-datetime.timedelta(seconds=ttl):
                 if "multiworld-server" in replica_set['metadata']['name']:
+                    print("Deleteing {}".format(replica_set['metadata']['name']))
                     self.delete_replica_set(replica_set['metadata']['name'])
                     retvar = True
     
@@ -153,6 +155,7 @@ class Kubernetes():
         for deployment in self.list_deployments().to_dict()['items']:
             if deployment['metadata']['creation_timestamp'] < datetime.datetime.now(deployment['metadata']['creation_timestamp'].tzinfo)-datetime.timedelta(seconds=ttl):
                 if "multiworld-server" in deployment['metadata']['name']:
+                    print("Deleteing {}".format(deployment['metadata']['name']))
                     self.delete_deployment(deployment['metadata']['name'])
                     retvar = True
     
@@ -163,6 +166,7 @@ class Kubernetes():
         for job in self.list_jobs().to_dict()['items']:
             if job['metadata']['creation_timestamp'] < datetime.datetime.now(job['metadata']['creation_timestamp'].tzinfo)-datetime.timedelta(seconds=ttl):
                 if "multiworld-server" in job['metadata']['name']:
+                    print("Deleteing {}".format(job['metadata']['name']))
                     self.delete_job(service['metadata']['name'])
                     retvar = True
     
