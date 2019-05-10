@@ -123,6 +123,8 @@ class Race():
             await self.parse_message_standard_race(message)
         elif self.type == 'spoiler':
             await self.parse_message_spoiler_race(message)
+        elif self.type == 'multiworld':
+            await self.parse_message_multiworld_race(message)
         else:
             await reply_channel(message, 'unkonwn_race_type')
 
@@ -185,6 +187,29 @@ class Race():
                 return
 
             await self._ready_spoiler(message, runner_name)
+
+    async def parse_message_multiworld_race(self, message):
+        runner_name = message.author.name
+
+        if message.content.startswith('.join') or message.content.startswith('.enter'):
+            await self._join_race(message, runner_name)
+
+        if message.content.startswith('.generate'):
+            # TODO: RQ code goes here...
+
+            # TODO: Enter while wait loop to wait for RQ job to finish
+
+            # TODO: Distribute data to channel about seed server
+
+            # TODO: Distribute seed files to each player
+            pass
+
+        if message.content.startswith('.ready'):
+            if runner_name not in self.runners:
+                await reply_channel(message, 'multiworld_notstarted')
+                return
+
+            await self._ready_multiworld(message, runner_name)
 
     async def _join_race(self, message, runner_name):
         await self.join(runner_name)
@@ -265,6 +290,8 @@ class Race():
                 await reply_channel(message, 'go')
 
     async def _ready_spoiler(self, message, runner_name):
+        remaining = await self.check_remaining()
+
         if remaining != 0:
             await reply_channel_string(message, self.remaining)
             return
@@ -305,3 +332,13 @@ class Race():
         self.time = round(time.time())
         await asyncio.sleep(1)
         await reply_channel(message, 'go')
+
+    async def _ready_multiworld(self, message, runner_name):
+        remaining = await self.check_remaining()
+
+        if remaining != 0:
+            await reply_channel_string(message, self.remaining, num=remainig)
+            return
+
+        self.time = round(time.time())
+        await self.persist()

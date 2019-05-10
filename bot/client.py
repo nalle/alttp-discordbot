@@ -78,6 +78,14 @@ class Client(discord.Client):
                 race.startrace()
                 await reply_channel(message, 'startrace')
 
+        if message.content.startswith(".startrace multiworld"):
+            if race.state:
+                await reply_channel(message, 'multiworld_alreadystarted')
+            else:
+                race.startrace()
+                race.type = 'multiworld'
+                await reply_channel(message, 'multiworld_startrace')
+
         if message.content.startswith(".stoprace"):
             if not race.state:
                 await reply_channel(message, 'norace')
