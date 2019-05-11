@@ -321,12 +321,15 @@ class Race():
             await asyncio.sleep(3)
             await reply_channel_string(message, 'All seeds and multiworld command have been distributed to all players. Use .ready when you are in-game and ready to start.')
 
-        if message.content.startswith('.ready'):
+        if message.content.startswith(".ready"):
             if runner_name not in self.runners:
                 await reply_channel(message, 'multiworld_notstarted')
                 return
 
-            await self._ready_multiworld(message, runner_name)
+            await self._ready_basic(message, runner_name)
+
+        if message.content.startswith(".done"):
+            await self._done(message, runner_name)
 
     async def _join_race(self, message, runner_name):
         await self.join(runner_name)
@@ -392,7 +395,7 @@ class Race():
                 await reply_channel(message, 'remaining')
                 return
 
-            if self.type in ('open', 'standard', 'custom'):
+            if self.type in ('open', 'standard', 'custom', 'multiworld'):
                 await self.persist()
 
                 await reply_channel(message, 'countdown')
