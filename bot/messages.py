@@ -1,84 +1,26 @@
-class Messages():
-    @property
-    def bootup(self):
-        return "ALTTP Racebot is booting up"
-
-    @property
-    def login_successful(self):
-        return "Login successful"
-
-    @property
-    def alreadystarted(self):
-        return "My dude :( a race is already started!"
-
-    @property
-    def startrace(self):
-        return "A race! Nice my dude, type .join to participate!"
-
-    @property
-    def stoprace(self):
-        return "Ooh no my dude :( the race is no more"
-
-    @property
-    def norace(self):
-        return "Duuuude, no race is running.. better got up on that"
-
-    def joinrace(self, name):
-        return "Welcome my dude {}!".format(name)
-
-    def quitrace(self, name):
-        return "Sad to see you go my dude {}!".format(name)
-
-    @property
-    def countdown(self):
-        return "Aww yeah! Lets get this party started! Counting down from 10.."
-
-    @property
-    def go(self):
-        return "GO GO GO"
-
-    def remaining(self, num):
-        return "My dude, we're so pumped! Waiting for {} players".format(num)
-
-    @property
-    def alreadydone(self):
-        return "But dude, you're already finished?!"
-
-    def done(self, time):
-        return "Dude, {}! SICK, gg wp".format(time)
-
-    @property
-    def notstarted(self):
-        return "Dude, don't jump the gun.. race hasn't even started yet!"
-
-    @property
-    def generating_seed(self):
-        return "Imma let you finish but there's a seed coming your way soon"
-
-
 message_mapping = {
-    'bootup': 'ALTTP Racebot is booting up',
-    'login_successful': 'Login successful',
-    'startrace': "A race! Nice my dude, type .join to participate!",
-    'alreadystarted': "My dude :( a race is already started!",
+    'bootup': 'Discord bot is booting up...',
+    'login_successful': 'Login to discord was successful',
+    'startrace': "A race has been started.",
+    'alreadystarted': "A race is already started.",
+    'alreadydone': "You have already been marked as done.",
     'unknown_race_type': "ERROR: Unknown race type set on race...",
-    'norace': "Duuuude, no race is running.. better got up on that",
-    'player_joinrace': "Welcome my dude {name}!",
-    'player_quitrace': "Sad to see you go my dude {name}!",
-    'countdown': "Aww yeah! Lets get this party started! Counting down from 10..",
-    'go': "GO GO GO",
-    'remaining': "My dude, we're so pumped! Waiting for {num} players",
-    'done': "Dude, {time}! SICK, gg wp",
-    'spoiler_starting_planning': "Starting planning phase spoiler log race. Download the spoiler log file and you have 30 minutes to study it",
-    'spoiler_starting_timer': "Starting timer in 5 seconds",
-    'stoprace': "Ooh no my dude :( the race is no more",
-    'generating_seed': "Imma let you finish but there's a seed coming your way soon",
-
-    'multiworld_alreadystarted': 'There is already a multiworld seed running...',
-    'multiworld_startrace': 'Starting multiworld race...',
-    'multiworld_notstarted': "Dude, don't jump the gun.. race hasn't even started yet!",
-    'multiworld_seed_generation_done': 'Seed generation and server is started. Starting to send out roms and configuraation',
-    'multiworld_tell_player_to_start': 'Now when you have all information sent to all of the participants, start you emulator and load the provided rom, and start your multiworld client with the provided command',
+    'norace': "There is currently no race started.",
+    'player_joinrace': "{name} has joined the race.",
+    'player_quitrace': "{name} has quit the race.",
+    'countdown': "All players are now ready, counting down from 10...",
+    'go': "GO!",
+    'remaining': "{name} is ready! {num} players remaining.",
+    'done': "{name} has finished at {time}.",
+    'spoiler_starting_planning': "Starting planning phase spoiler-log race. Download the spoiler-log file and you have 30 minutes to study it.",
+    'spoiler_starting_timer': "Starting timer in 5 seconds.",
+    'stoprace': "The race has been stopped.",
+    'generating_seed': "Generating seed, please wait.",
+    'multiworld_alreadystarted': 'There is already a multiworld race is already started.',
+    'multiworld_startrace': 'A multiworld race has been started.',
+    'multiworld_notstarted': "There is currently no multiworld race.",
+    'multiworld_seed_generation_done': 'Seed generation has completed and server has been started. Sending out server information and ROMs to players.',
+    'multiworld_tell_player_to_start': 'Please start you emulator and load the provided rom, start your multiworld client with the provided command.',
 }
 
 
