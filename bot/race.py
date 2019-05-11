@@ -219,14 +219,14 @@ class Race():
             del arg[0]
 
             arguments = {
-                         "multi": len(self.runners),
-                         "mode": "open",
-                         "goal": "ganon",
-                         "logic": "noglitches",
-                         "shuffle": "vanilla",
-                         "hints": "true",
-                         "heartbeep": "quarter"
-                        }
+                "multi": len(self.runners),
+                "mode": "open",
+                "goal": "ganon",
+                "logic": "noglitches",
+                "shuffle": "vanilla",
+                "hints": "true",
+                "heartbeep": "quarter",
+            }
 
             for key, value in dict(s.split('=') for s in arg).items():
                 arguments[key] = value
