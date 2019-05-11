@@ -31,6 +31,8 @@ spec:
             - name: http
               containerPort: 80
           env:
+            - name: ROMS_BASE_PATH
+              value: /multiworld
             - name: DISCORD_TOKEN
               valueFrom:
                 secretKeyRef:
