@@ -81,11 +81,7 @@ class Multiworld():
         redis_port = os.environ.get('REDIS_PORT') or 6379
         redis_password = os.environ.get('REDIS_PASSWORD') or None
 
-        r = redis.Redis(
-            host=redis_host,
-            port=redis_port,
-            password=redis_password,
-        )
+        r = redis.from_url(redis_host)
 
         self.arguments = []
         for k, v in kwargs.items():

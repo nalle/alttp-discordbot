@@ -2,7 +2,7 @@ FROM alpine
 
 COPY requirements.txt /tmp/requirements.txt
 RUN apk update && \
-    apk add python3 py3-virtualenv nginx 
+    apk add python3 py3-virtualenv nginx gcc python3-dev libc-dev
 RUN pip3 install --upgrade pip
 RUN pip3 install -r /tmp/requirements.txt
 RUN mkdir -p /run/nginx/

@@ -209,11 +209,8 @@ class Race():
             redis_password = os.environ.get('REDIS_PASSWORD') or None
 
             import redis
-            r = redis.Redis(
-                host=redis_host,
-                port=redis_port,
-                password=redis_password,
-            )
+            r = redis.from_url(redis_host)
+
 
             q = Queue(connection=r)
 

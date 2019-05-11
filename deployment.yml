@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,6 +21,12 @@ spec:
         - name: alttpbot
           imagePullPolicy: Always
           image: registry.gigabit.nu/alttpbot:latest
+          volumeMounts:
+            - mountPath: /multiworld/
+              name: multiworld-storage
+            - mountPath: /root/.kube
+              readOnly: true
+              name: kubeconfig
           ports:
             - name: http
               containerPort: 80
@@ -29,14 +36,23 @@ spec:
                 secretKeyRef:
                   name: discordtoken
                   key: token
+            - name: REDIS_HOST
+              value: "redis://:ettpassword@212.63.208.215"
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: redispassword
                   key: password
-
+      volumes:
+        - name: kubeconfig
+          secret:
+            secretName: kubernetes-config
+        - name: multiworld-storage
+          persistentVolumeClaim:
+            claimName: multiworld-claim
       imagePullSecrets:
         - name: regcred
+
 
 ---
 kind: Service
