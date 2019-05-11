@@ -1,4 +1,4 @@
-from bot.k8s import Kubernetes 
+from bot.k8s import Kubernetes
 from jinja2 import Template
 import xkcdpass.xkcd_password as xp
 import datetime
@@ -8,14 +8,17 @@ import os
 import random
 import string
 import json
+import redis
 
 k8s = Kubernetes()
 
+
 class Multiworld():
+
     def randomString(self, stringLength=10):
         letters = string.ascii_lowercase
         return ''.join(random.choice(letters) for i in range(stringLength))
-        
+
     def generate_template(self, template=None, **kwargs):
         with open(template) as f:
             t = Template(f.read())
@@ -32,7 +35,7 @@ class Multiworld():
         if port in ports:
             return self.get_port()
         else:
-            return port 
+            return port
 
     def generate_password(self):
         def capitalize_first_letter(s):
@@ -41,12 +44,12 @@ class Multiworld():
             for i, c in enumerate(s):
                 new_str.append(c.capitalize())
             return "".join(new_str)
-    
-    
+
+
         words = xp.locate_wordfile()
         mywords = xp.generate_wordlist(wordfile=words, min_length=5, max_length=8)
         raw_password = xp.generate_xkcdpassword(mywords)
-    
+
         return capitalize_first_letter(raw_password)
 
     def _poll_job(self, job):
@@ -73,9 +76,19 @@ class Multiworld():
                 time.sleep(1)
         return multidata, roms
 
-    def create_multiworld(self, **kwargs):
+    def create_multiworld(self, uuid, **kwargs):
+        redis_host = os.environ.get('REDIS_HOST') or "127.0.0.1"
+        redis_port = os.environ.get('REDIS_PORT') or 6379
+        redis_password = os.environ.get('REDIS_PASSWORD') or None
+
+        r = redis.Redis(
+            host=redis_host,
+            port=redis_port,
+            password=redis_password,
+        )
+
         self.arguments = []
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             self.arguments.append("--{}".format(k))
             self.arguments.append("{}".format(v))
 
@@ -83,20 +96,54 @@ class Multiworld():
         port = self.get_port()
         hashid = self.randomString()
 
-        pv = k8s.create_persistent_volume(self.generate_template(template="templates/k8s-persistent-volume"))
-        pvc = k8s.create_persistent_volumeclaim(self.generate_template(template="templates/k8s-persistent-volume-claim"))
-        job = k8s.create_job(self.generate_template(template="templates/k8s-batchjob", 
-                                  name="multiworld-generator-{}".format(hashid),arguments=self.arguments))
+        pv = k8s.create_persistent_volume(
+            self.generate_template(
+                template="templates/k8s-persistent-volume",
+            )
+        )
+
+        pvc = k8s.create_persistent_volumeclaim(
+            self.generate_template(
+                template="templates/k8s-persistent-volume-claim",
+            )
+        )
+
+        job = k8s.create_job(
+            self.generate_template(
+                template="templates/k8s-batchjob",
+                name="multiworld-generator-{}".format(hashid),
+                arguments=self.arguments,
+            )
+        )
 
         multidata, roms = self._poll_job(job)
 
-        deployment = k8s.create_deployment(self.generate_template(template="templates/k8s-deployment", 
-                                                name="multiworld-server-{}".format(hashid),
-                                                port=port,
-                                                password=password, 
-                                                multidata=multidata))
-        service  = k8s.create_service(self.generate_template(template="templates/k8s-service", 
-                                           name="multiworld-server-{}".format(hashid),
-                                           port=port))
+        deployment = k8s.create_deployment(
+            self.generate_template(
+                template="templates/k8s-deployment",
+                name="multiworld-server-{}".format(hashid),
+                port=port,
+                password=password,
+                multidata=multidata,
+            )
+        )
+        service  = k8s.create_service(
+            self.generate_template(
+                template="templates/k8s-service",
+                name="multiworld-server-{}".format(hashid),
+                port=port,
+            )
+        )
 
-        return json.dumps({"server": {"host": "alttp.gigabit.nu", "port": port, "password": password}, "roms": roms})
+        output_data = json.dumps({
+            "server": {
+                "host": "alttp.gigabit.nu",
+                "port": port,
+                "password": password
+            },
+            "roms": roms
+        })
+
+        r.set(uuid, output_data)
+
+        return output_data

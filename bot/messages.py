@@ -71,6 +71,11 @@ message_mapping = {
     'done': "Dude, {time}! SICK, gg wp",
     'spoiler_starting_planning': "Starting planning phase spoiler log race. Download the spoiler log file and you have 30 minutes to study it",
     'spoiler_starting_timer': "Starting timer in 5 seconds",
+    'stoprace': "Ooh no my dude :( the race is no more",
+
+    'multiworld_alreadystarted': 'There is already a multiworld seed running...',
+    'multiworld_startrace': 'Starting multiworld race...',
+    'multiworld_notstarted': "Dude, don't jump the gun.. race hasn't even started yet!",
 }
 
 

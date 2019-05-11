@@ -3,14 +3,15 @@ import json
 import operator
 import os
 import time
-from bot.messages import Messages, reply_channel, message_mapping, reply_channel_string
+import uuid
+
+from bot.messages import reply_channel, message_mapping, reply_channel_string
+from bot.multiworld import Multiworld
 from datetime import timedelta
 from redis import Redis
-from tabulate import tabulate
 from rq import Queue
+from tabulate import tabulate
 from worker import conn
-from multiworld import Multiworld
-messages = Messages()
 
 
 class Race():
@@ -29,11 +30,13 @@ class Race():
             self.runners = race['runners']
             self.time = race['time']
             self.type = race['type']
+            self.uuid = race['uuid']
         else:
             self.state = False
             self.runners = {}
             self.time = None
             self.type = "custom"
+            self.uuid = ""
 
     async def results(self):
         result = []
@@ -49,6 +52,7 @@ class Race():
                 "time": self.time,
                 "runners": {},
                 "type": self.type,
+                "uuid": self.uuid,
             }
         }
 
@@ -73,6 +77,7 @@ class Race():
         self.runners = {}
         self.time = None
         self.type = "custom"
+        self.uuid = str(uuid.uuid4())
 
     async def stoprace(self):
         self.state = False
@@ -80,6 +85,7 @@ class Race():
         # self.runners = {}
         # self.time = None
         self.type = "custom"
+        self.uuid = ""
 
     async def join(self, name):
         self.runners[name] = {
@@ -114,6 +120,7 @@ class Race():
         await self.persist()
 
     async def parse_message(self, message):
+        print("Parsing race object", self.uuid)
         print(message, message.content, self.type)
 
         if self.type == 'open':
@@ -198,19 +205,46 @@ class Race():
         if message.content.startswith('.generate'):
             multiworld = Multiworld()
 
-            q = Queue(connection=conn)
-            result = q.enqueue(multiworld.create_multiworld, multi=2, mode="open", shuffle="vanilla", goal="ganon")
-            while result.result is None:
-                await asyncio.sleep(1)
+            redis_host = os.environ.get('REDIS_HOST') or "127.0.0.1"
+            redis_port = os.environ.get('REDIS_PORT') or 6379
+            redis_password = os.environ.get('REDIS_PASSWORD') or None
 
-            # TODO: RQ code goes here...
+            import redis
+            r = redis.Redis(
+                host=redis_host,
+                port=redis_port,
+                password=redis_password,
+            )
 
-            # TODO: Enter while wait loop to wait for RQ job to finish
+            q = Queue(connection=r)
+
+            q.enqueue(
+                multiworld.create_multiworld,
+                self.uuid,
+                multi=2,
+                mode="open",
+                shuffle="vanilla",
+                goal="ganon",
+            )
+
+            while True:
+                result = await self.r.get(self.uuid)
+                if result:
+                    print("RQ worker complete...")
+                    print(result)
+                    break
+                else:
+                    # Wait
+                    print(f"Waiting for RQ worker to finish up and write to key : {self.uuid}")
+                    await asyncio.sleep(10)
 
             # TODO: Distribute data to channel about seed server
 
             # TODO: Distribute seed files to each player
-            pass
+            # file_paths = []
+            # for file_path in file_paths:
+            #     file_name = os.path.basename(file_path)
+            #     await message.author.send('hello...', file=discord.File(file_path, file_name))
 
         if message.content.startswith('.ready'):
             if runner_name not in self.runners:

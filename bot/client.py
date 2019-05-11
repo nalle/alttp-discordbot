@@ -6,13 +6,12 @@ import time
 from datetime import timedelta
 from bot.runner import Runner
 from bot.race import Race
-from bot.messages import Messages, reply_channel, message_mapping, reply_channel_string
+from bot.messages import reply_channel, message_mapping, reply_channel_string
 from bot.seed import SeedGenerator
 
 import aioredis
 
 all_races = {}
-messages = Messages()
 seed = SeedGenerator()
 
 # Allow for devs to speedup the timer execution time if needed
@@ -71,19 +70,21 @@ class Client(discord.Client):
 
             await reply_channel_string(message, current_races)
 
-        if message.content.startswith(".startrace"):
+        if message.content == ".startrace":
             if race.state:
                 await reply_channel(message, 'alreadystarted')
             else:
-                race.startrace()
+                await race.startrace()
                 await reply_channel(message, 'startrace')
 
         if message.content.startswith(".startrace multiworld"):
             if race.state:
                 await reply_channel(message, 'multiworld_alreadystarted')
             else:
-                race.startrace()
+                await race.startrace()
                 race.type = 'multiworld'
+                await race.persist()
+
                 await reply_channel(message, 'multiworld_startrace')
 
         if message.content.startswith(".stoprace"):
