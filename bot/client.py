@@ -32,9 +32,12 @@ class Client(discord.Client):
         print(f'Logged on as {self.user}')
 
         redis_host = os.environ.get('REDIS_HOST') or "redis://localhost"
+        redis_port = os.environ.get('REDIS_PORT') or 6379
         redis_password = os.environ.get('REDIS_PASSWORD') or None
 
-        self.redis = await aioredis.create_redis(redis_host, loop=self.loop, password=redis_password)
+        redis_url = "redis://{}".format(redis_host)
+
+        self.redis = await aioredis.create_redis(redis_url, loop=self.loop, password=redis_password)
 
         print(f'Database connection to redis established : {redis_host}')
 

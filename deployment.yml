@@ -37,7 +37,7 @@ spec:
                   name: discordtoken
                   key: token
             - name: REDIS_HOST
-              value: "redis://:ettpassword@212.63.208.215"
+              value: "212.63.208.215"
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -52,21 +52,3 @@ spec:
             claimName: multiworld-claim
       imagePullSecrets:
         - name: regcred
-
-
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: alttpbot
-  labels:
-    app: alttpbot
-spec:
-  selector:
-    app: alttpbot
-  type: LoadBalancer
-  ports:
-  - protocol: TCP
-    port: 80
-  externalIPs:
-  - 212.63.208.215
