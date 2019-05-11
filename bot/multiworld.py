@@ -147,3 +147,8 @@ class Multiworld():
         r.set(uuid, output_data)
 
         return output_data
+
+
+def start_multiworld_job(*args, **kwargs):
+    m = Multiworld()
+    m.create_multiworld(*args, **kwargs)

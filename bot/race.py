@@ -6,12 +6,11 @@ import time
 import uuid
 
 from bot.messages import reply_channel, message_mapping, reply_channel_string
-from bot.multiworld import Multiworld
+from bot.multiworld import Multiworld, start_multiworld_job
 from datetime import timedelta
 from redis import Redis
 from rq import Queue
 from tabulate import tabulate
-from worker import conn
 
 
 class Race():
@@ -203,7 +202,7 @@ class Race():
             await self._join_race(message, runner_name)
 
         if message.content.startswith('.generate'):
-            multiworld = Multiworld()
+            # multiworld = Multiworld()
 
             redis_host = os.environ.get('REDIS_HOST') or "127.0.0.1"
             redis_port = os.environ.get('REDIS_PORT') or 6379
@@ -219,7 +218,7 @@ class Race():
             q = Queue(connection=r)
 
             q.enqueue(
-                multiworld.create_multiworld,
+                start_multiworld_job,
                 self.uuid,
                 multi=2,
                 mode="open",
