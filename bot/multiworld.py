@@ -56,26 +56,36 @@ class Multiworld():
         roms = []
         multidata = ""
         wait_for_seed = True
+        wait_for_pod = True
 
-        while wait_for_seed:
-            for item in k8s.list_jobs().to_dict()['items']:
-                if item['status']['succeeded'] and item['metadata']['name'] == job.to_dict()['metadata']['labels']['job-name']:
-                    for pod in k8s.list_pods().to_dict()['items']:
-                        if pod['status']['conditions'][0]['reason'] == "PodCompleted":
-                            seed = re.findall("Seed: ([0-9]+)", k8s.read_log(pod['metadata']['name']))
-                            for directories, crap, files in os.walk("/multiworld"):
-                                for file in files:
-                                    if seed[0] in file:
-                                        if "multidata" in file:
-                                            multidata = file
-                                        else:
-                                            roms.append(file)
+        while wait_for_pod:
+            for pod in k8s.list_pods().to_dict()['items']:
+                if job.to_dict()['metadata']['labels']['job-name'] in pod['metadata']['name']:
+                    if pod['status']['phase'] == "Succeeded":
+                        print(job.to_dict()['metadata']['labels']['job-name'], 'in', pod['metadata']['name'], 'and', pod['status']['phase'], '==', "Succeeded")
+                        pod_name = pod['metadata']['name']
+                        wait_for_pod = False
+            time.sleep(1)
 
-                            k8s.delete_pod(pod['metadata']['name'])
-                    k8s.delete_job(item['metadata']['name'])
-                    wait_for_seed = False
-                time.sleep(1)
-        return multidata, roms
+        log = k8s.read_log(pod_name)
+        seed = re.findall("Seed: ([0-9]+)", log)
+
+        k8s.delete_pod(pod_name)
+        k8s.delete_job(job.to_dict()['metadata']['labels']['job-name'])
+        return seed[0]
+
+    def find_roms(self, seed):
+        files = []
+
+        for directories, crap, filenames in os.walk("/multiworld"):
+            for filename in filenames:
+                if seed in filename:
+                    if "_multidata" in filename:
+                        multidata = filename
+                    else:
+                        files.append(filename)
+                    
+        return multidata, files
 
     def create_multiworld(self, uuid, **kwargs):
         redis_host = os.environ.get('REDIS_HOST') or "127.0.0.1"
@@ -91,15 +101,11 @@ class Multiworld():
 
         self.arguments = []
         for k, v in kwargs.items():
-            self.arguments.append("--{}".format(k))
-            if isinstance(v, int):
-                self.arguments.append("{}".format(v))
+            if k in ['hints', 'shuffleganon','skip_playthrough']:
+                self.arguments.append("--{}".format(k))
             else:
-                if v.lower() is 'true':
-                    self.arguments.append("{}".format(v))
-                elif v.lower() is 'false':
-                    if k in self.arguments:
-                        self.arguments.remove(k)
+                self.arguments.append("--{}".format(k))
+                self.arguments.append("{}".format(v))
 
         password = self.generate_password()
         port = self.get_port()
@@ -125,7 +131,8 @@ class Multiworld():
             )
         )
 
-        multidata, roms = self._poll_job(job)
+        seed = self._poll_job(job)
+        multidata, roms = self.find_roms(seed)
 
         deployment = k8s.create_deployment(
             self.generate_template(
@@ -150,7 +157,7 @@ class Multiworld():
                 "port": port,
                 "password": password
             },
-            "roms": roms
+            "roms": roms 
         })
 
         r.set(uuid, output_data)
