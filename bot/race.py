@@ -183,7 +183,7 @@ class Race():
 
             await self._ready_basic(message, runner_name)
 
-    async def parse_message_spoiler_raace(self, message):
+    async def parse_message_spoiler_race(self, message):
         runner_name = message.author.name
 
         if message.content.startswith('.join') or message.content.startswith('.enter'):
@@ -247,56 +247,55 @@ class Race():
 
             r = redis.from_url(redis_url)
 
-            # async with channel.typing():
+            async with message.channel.typing():
+                q = Queue(connection=r)
 
-            q = Queue(connection=r)
+                q.enqueue(
+                    start_multiworld_job,
+                    self.uuid,
+                    **arguments
+                )
 
-            q.enqueue(
-                start_multiworld_job,
-                self.uuid,
-                **arguments
-            )
+                while True:
+                    generation_result = await self.r.get(self.uuid)
+                    if generation_result:
+                        print("RQ worker complete...")
+                        print(generation_result)
+                        generation_result = json.loads(generation_result)
+                        break
+                    else:
+                        print(f"Waiting for RQ worker to finish up and write to key : {self.uuid}")
+                        await asyncio.sleep(10)
 
-            while True:
-                generation_result = await self.r.get(self.uuid)
-                if generation_result:
-                    print("RQ worker complete...")
-                    print(generation_result)
-                    generation_result = json.loads(generation_result)
-                    break
-                else:
-                    print(f"Waiting for RQ worker to finish up and write to key : {self.uuid}")
-                    await asyncio.sleep(10)
+                # TODO: Distribute data to channel about seed server
+                await reply_channel(message, 'multiworld_seed_generation_done')
+                await asyncio.sleep(3)
+                await reply_channel(message, 'multiworld_tell_player_to_start')
+                await asyncio.sleep(3)
 
-            # TODO: Distribute data to channel about seed server
-            await reply_channel(message, 'multiworld_seed_generation_done')
-            await asyncio.sleep(3)
-            await reply_channel(message, 'multiworld_tell_player_to_start')
-            await asyncio.sleep(3)
+                # Assign a slot to each player
+                counter = 1
+                for runner_name, runner_data in self.runners.items():
+                    self.runners[runner_name]['multiworld_slot'] = counter
+                    counter += 1
 
-            # Assign a slot to each player
-            counter = 1
-            for runner_name, runner_data in self.runners.items():
-                self.runners[runner_name]['multiworld_slot'] = counter
-                counter += 1
+                await self.persist()
 
-            await self.persist()
+                file_paths = generation_result['roms']
 
-            file_paths = generation_result['roms']
+                # Bind each rom file to each player
+                counter = 1
+                for runner_name in self.runners:
+                    for file_path in file_paths:
+                        if f'P{counter}' in file_path:
+                            self.runners[runner_name]['multiworld_seed'] = file_path
 
-            # Bind each rom file to each player
-            counter = 1
-            for runner_name in self.runners:
-                for file_path in file_paths:
-                    if f'P{counter}' in file_path:
-                        self.runners[runner_name]['multiworld_seed'] = file_path
+                    counter += 1
 
-                counter += 1
+                await self.persist()
 
-            await self.persist()
-
-            await reply_channel_string(message, 'All slots and seeds have been assigned, sending out to players')
-            await asyncio.sleep(2)
+                await reply_channel_string(message, 'All slots and seeds have been assigned, sending out to players')
+                await asyncio.sleep(2)
 
             # Get the default rom base path for where all romes is located/stored
             roms_base_path = os.environ.get('ROMS_BASE_PATH') or os.getcwd()
