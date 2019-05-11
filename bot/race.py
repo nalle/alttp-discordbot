@@ -205,7 +205,8 @@ class Race():
             # multiworld = Multiworld()
 
             redis_host = os.environ.get('REDIS_HOST') or "127.0.0.1"
-            redis_port = os.environ.get('REDIS_PORT') or 6379
+            #redis_port = os.environ.get('REDIS_PORT') or 6379
+            redis_port = 6379
             redis_password = os.environ.get('REDIS_PASSWORD') or None
 
             import redis
@@ -213,7 +214,8 @@ class Race():
             if redis_password is not None:
                 redis_url = "redis://:{}@{}:{}".format(redis_password, redis_host, redis_port)
             else: 
-                redis_url = "redis://{}:{}".format(redis_password, redis_host, redis_port)
+                redis_url = "redis://{}:{}".format(redis_host, redis_port)
+            print(redis_url)
 
             r = redis.from_url(redis_url)
 

@@ -63,11 +63,11 @@ class Multiworld():
                     k8s.delete_job(item['metadata']['name'])
                     for pod in k8s.list_pods().to_dict()['items']:
                         if pod['status']['conditions'][0]['reason'] == "PodCompleted":
-                            seed = re.findall("Seed: ([0-9]+)", k8s.read_log(pod['metadata']['name']))[0]
+                            seed = re.findall("Seed: ([0-9]+)", k8s.read_log(pod['metadata']['name']))
                             k8s.delete_pod(pod['metadata']['name'])
                             for directories, crap, files in os.walk("/multiworld"):
                                 for file in files:
-                                    if seed in file:
+                                    if seed[0] in file:
                                         if "multidata" in file:
                                             multidata = file
                                         else:
