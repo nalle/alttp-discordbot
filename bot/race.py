@@ -204,6 +204,22 @@ class Race():
         if message.content.startswith('.generate'):
             # multiworld = Multiworld()
 
+            arg = message.content.split()
+            del arg[0]
+
+            arguments = {
+                         "multi": len(self.runners),
+                         "mode": "open",
+                         "goal": "ganon",
+                         "logic": "noglitches",
+                         "shuffle": "vanilla",
+                         "hints": "true",
+                         "heartbeep": "quarter"
+                        }
+
+            for key, value in dict(s.split('=') for s in arg).items():
+                arguments[key] = value
+
             redis_host = os.environ.get('REDIS_HOST') or "127.0.0.1"
             #redis_port = os.environ.get('REDIS_PORT') or 6379
             redis_port = 6379
@@ -224,10 +240,7 @@ class Race():
             q.enqueue(
                 start_multiworld_job,
                 self.uuid,
-                multi=2,
-                mode="open",
-                shuffle="vanilla",
-                goal="ganon",
+                **arguments
             )
 
             while True:

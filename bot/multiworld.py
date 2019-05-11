@@ -60,11 +60,9 @@ class Multiworld():
         while wait_for_seed:
             for item in k8s.list_jobs().to_dict()['items']:
                 if item['status']['succeeded'] and item['metadata']['name'] == job.to_dict()['metadata']['labels']['job-name']:
-                    k8s.delete_job(item['metadata']['name'])
                     for pod in k8s.list_pods().to_dict()['items']:
                         if pod['status']['conditions'][0]['reason'] == "PodCompleted":
                             seed = re.findall("Seed: ([0-9]+)", k8s.read_log(pod['metadata']['name']))
-                            k8s.delete_pod(pod['metadata']['name'])
                             for directories, crap, files in os.walk("/multiworld"):
                                 for file in files:
                                     if seed[0] in file:
@@ -72,6 +70,9 @@ class Multiworld():
                                             multidata = file
                                         else:
                                             roms.append(file)
+
+                            k8s.delete_pod(pod['metadata']['name'])
+                    k8s.delete_job(item['metadata']['name'])
                     wait_for_seed = False
                 time.sleep(1)
         return multidata, roms
@@ -91,7 +92,14 @@ class Multiworld():
         self.arguments = []
         for k, v in kwargs.items():
             self.arguments.append("--{}".format(k))
-            self.arguments.append("{}".format(v))
+            if isinstance(v, int):
+                self.arguments.append("{}".format(v))
+            else:
+                if v.lower() is 'true':
+                    self.arguments.append("{}".format(v))
+                elif v.lower() is 'false':
+                    if k in self.arguments:
+                        self.arguments.remove(k)
 
         password = self.generate_password()
         port = self.get_port()
