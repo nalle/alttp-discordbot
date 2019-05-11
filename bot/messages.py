@@ -64,7 +64,7 @@ message_mapping = {
     'unknown_race_type': "ERROR: Unknown race type set on race...",
     'norace': "Duuuude, no race is running.. better got up on that",
     'player_joinrace': "Welcome my dude {name}!",
-    'quitrace': "Sad to see you go my dude {name}!",
+    'player_quitrace': "Sad to see you go my dude {name}!",
     'countdown': "Aww yeah! Lets get this party started! Counting down from 10..",
     'go': "GO GO GO",
     'remaining': "My dude, we're so pumped! Waiting for {num} players",
@@ -72,6 +72,7 @@ message_mapping = {
     'spoiler_starting_planning': "Starting planning phase spoiler log race. Download the spoiler log file and you have 30 minutes to study it",
     'spoiler_starting_timer': "Starting timer in 5 seconds",
     'stoprace': "Ooh no my dude :( the race is no more",
+    'generating_seed': "Imma let you finish but there's a seed coming your way soon",
 
     'multiworld_alreadystarted': 'There is already a multiworld seed running...',
     'multiworld_startrace': 'Starting multiworld race...',

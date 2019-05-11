@@ -44,7 +44,7 @@ class SeedGenerator():
         goal='ganon', weapons='randomized', tournament=True, spoiler=False, enemizer=False,
         lang='en',
     ):
-        if logic not in valid_seed_commands['logic']:
+        if logic not in self.valid_seed_commands['logic']:
             raise Exception(f"Invalid argument '{logic}' for argument 'logic' when generating a seed")
 
         data = {

@@ -41,6 +41,7 @@ class Race():
             self.uuid = ""
 
     async def results(self):
+        # TODO: This result printing is probably bad as it do not properly order result on people correct
         result = []
         for runner in sorted(self.runners, key=operator.itemgetter(1)):
             result.append([runner, str(timedelta(seconds=self.runners[runner]['time']-self.time))])
@@ -339,7 +340,7 @@ class Race():
         await self.unjoin(message.author.name)
         await self.check_remaining()
 
-        await reply_channel(message, 'player_joinrace', name=message.author.name)
+        await reply_channel(message, 'player_quitrace', name=message.author.name)
 
         is_done = await self.check_done()
 
@@ -392,7 +393,7 @@ class Race():
             remaining = await self.check_remaining()
 
             if remaining != 0:
-                await reply_channel(message, 'remaining')
+                await reply_channel(message, 'remaining', num=remaining)
                 return
 
             if self.type in ('open', 'standard', 'custom', 'multiworld'):

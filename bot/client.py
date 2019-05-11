@@ -125,23 +125,26 @@ class Client(discord.Client):
             race_result = await race.results()
             await reply_channel_string(message, race_result)
 
-        # if message.content.startswith(".standard"):
-        #     yield messages.generating_seed
-        #     yield f"{seed.generate_standard()}"
-        #     race.type = "standard"
-        #     await race.persist()
+        if message.content.startswith(".standard"):
+            await reply_channel(message, 'generating_seed')
+            generated_seed = seed.generate_standard()
+            await reply_channel_string(message, generated_seed)
+            race.type = "standard"
+            await race.persist()
 
-        # if message.content.startswith(".open"):
-        #     yield messages.generating_seed
-        #     yield f"{seed.generate_open()}"
-        #     race.type = "open"
-        #     await race.persist()
+        if message.content.startswith(".open"):
+            await reply_channel(message, 'generating_seed')
+            generated_seed = seed.generate_open()
+            await reply_channel_string(message, generated_seed)
+            race.type = "open"
+            await race.persist()
 
-        # if message.content.startswith(".spoiler"):
-        #     yield messages.generating_seed
-        #     yield f"{seed.generate_spoiler()}"
-        #     race.type = "spoiler"
-        #     await race.persist()
+        if message.content.startswith(".spoiler"):
+            await reply_channel(message, 'generating_seed')
+            generated_seed = seed.generate_spoiler()
+            await reply_channel_string(message, generated_seed)
+            race.type = "spoiler"
+            await race.persist()
 
         # if message.content.startswith(".generate"):
         #     yield messages.generating_seed
@@ -161,6 +164,3 @@ class Client(discord.Client):
 
         if message.content.startswith("."):
             await race.persist()
-
-        # if message.content.startswith(".msgme"):
-        #     await message.author.send('hello...', file=discord.File('foobar.txt', 'foobar.txt'))
