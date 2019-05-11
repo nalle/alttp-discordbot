@@ -31,7 +31,7 @@ class Client(discord.Client):
     async def on_ready(self):
         print(f'Logged on as {self.user}')
 
-        redis_host = os.environ.get('REDIS_HOST') or "redis://localhost"
+        redis_host = os.environ.get('REDIS_HOST') or "localhost"
         redis_port = os.environ.get('REDIS_PORT') or 6379
         redis_password = os.environ.get('REDIS_PASSWORD') or None
 
@@ -51,7 +51,7 @@ class Client(discord.Client):
 
         if not race:
             race = Race(channel_name, self.redis)
-            await race.initialize(channel_name)
+            await race.initialize(channel_name, self)
             await race.persist()
 
         if message.content.startswith(".races"):

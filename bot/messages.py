@@ -76,6 +76,8 @@ message_mapping = {
     'multiworld_alreadystarted': 'There is already a multiworld seed running...',
     'multiworld_startrace': 'Starting multiworld race...',
     'multiworld_notstarted': "Dude, don't jump the gun.. race hasn't even started yet!",
+    'multiworld_seed_generation_done': 'Seed generation and server is started. Starting to send out roms and configuraation',
+    'multiworld_tell_player_to_start': 'Now when you have all information sent to all of the participants, start you emulator and load the provided rom, and start your multiworld client with the provided command',
 }
 
 

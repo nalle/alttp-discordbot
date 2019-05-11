@@ -1,12 +1,14 @@
 import asyncio
+import discord
 import json
 import operator
 import os
+import textwrap
 import time
 import uuid
 
 from bot.messages import reply_channel, message_mapping, reply_channel_string
-from bot.multiworld import Multiworld, start_multiworld_job
+from bot.multiworld import start_multiworld_job
 from datetime import timedelta
 from redis import Redis
 from rq import Queue
@@ -18,10 +20,11 @@ class Race():
     def __init__(self, channel, redis):
         self.r = redis
 
-    async def initialize(self, channel):
+    async def initialize(self, channel, client):
         race = await self.r.get(channel)
 
         self.channel = channel
+        self.client = client
 
         if race:
             race = json.loads(race)[channel]
@@ -60,6 +63,9 @@ class Race():
                 "ready": self.runners[runner]['ready'],
                 "done": self.runners[runner]['done'],
                 "time": self.runners[runner]['time'],
+                'uid': self.runners[runner]['uid'],
+                'multiworld_slot': self.runners[runner]['multiworld_slot'],
+                'multiworld_seed': self.runners[runner]['multiworld_seed'],
             }
 
         await self.r.set(self.channel, json.dumps(data))
@@ -91,6 +97,9 @@ class Race():
             "ready": False,
             "done": False,
             "time": None,
+            'uid': 0,
+            'multiworld_slot': 0,
+            'multiworld_seed': "",
         }
 
     async def unjoin(self, name):
@@ -138,10 +147,7 @@ class Race():
     async def parse_message_open_race(self, message):
         runner_name = message.author.name
 
-        print("parsing open race mssage", message.content)
-
         if message.content.startswith('.join') or message.content.startswith('.enter'):
-            print("Joining race...")
             await self._join_race(message, runner_name)
 
         if message.content.startswith(".unjoin") or message.content.startswith(".quit") or message.content.startswith(".forfeit"):
@@ -200,10 +206,15 @@ class Race():
 
         if message.content.startswith('.join') or message.content.startswith('.enter'):
             await self._join_race(message, runner_name)
+            self.runners[runner_name]['uid'] = int(message.author.id)
+            await self.persist()
+
+            print(" ** All current users...")
+            for runner_name, runner_data in self.runners.items():
+                user = self.client.get_user(runner_data['uid'])
+                print(' - ', user)
 
         if message.content.startswith('.generate'):
-            # multiworld = Multiworld()
-
             arg = message.content.split()
             del arg[0]
 
@@ -229,11 +240,13 @@ class Race():
 
             if redis_password is not None:
                 redis_url = "redis://:{}@{}:{}".format(redis_password, redis_host, redis_port)
-            else: 
+            else:
                 redis_url = "redis://{}:{}".format(redis_host, redis_port)
             print(redis_url)
 
             r = redis.from_url(redis_url)
+
+            # async with channel.typing():
 
             q = Queue(connection=r)
 
@@ -244,23 +257,69 @@ class Race():
             )
 
             while True:
-                result = await self.r.get(self.uuid)
-                if result:
+                generation_result = await self.r.get(self.uuid)
+                if generation_result:
                     print("RQ worker complete...")
-                    print(result)
+                    print(generation_result)
+                    generation_result = json.loads(generation_result)
                     break
                 else:
-                    # Wait
                     print(f"Waiting for RQ worker to finish up and write to key : {self.uuid}")
                     await asyncio.sleep(10)
 
             # TODO: Distribute data to channel about seed server
+            await reply_channel(message, 'multiworld_seed_generation_done')
+            await asyncio.sleep(3)
+            await reply_channel(message, 'multiworld_tell_player_to_start')
+            await asyncio.sleep(3)
 
-            # TODO: Distribute seed files to each player
-            # file_paths = []
-            # for file_path in file_paths:
-            #     file_name = os.path.basename(file_path)
-            #     await message.author.send('hello...', file=discord.File(file_path, file_name))
+            # Assign a slot to each player
+            counter = 1
+            for runner_name, runner_data in self.runners.items():
+                self.runners[runner_name]['multiworld_slot'] = counter
+                counter += 1
+
+            await self.persist()
+
+            file_paths = generation_result['roms']
+
+            # Bind each rom file to each player
+            counter = 1
+            for runner_name in self.runners:
+                for file_path in file_paths:
+                    if f'P{counter}' in file_path:
+                        self.runners[runner_name]['multiworld_seed'] = file_path
+
+                counter += 1
+
+            await self.persist()
+
+            await reply_channel_string(message, 'All slots and seeds have been assigned, sending out to players')
+            await asyncio.sleep(2)
+
+            # Get the default rom base path for where all romes is located/stored
+            roms_base_path = os.environ.get('ROMS_BASE_PATH') or os.getcwd()
+
+            for runner_name, runner_data in self.runners.items():
+                full_file_name = os.path.join(roms_base_path, runner_data['multiworld_seed'])
+                seed_file_name = os.path.basename(full_file_name)
+
+                seed_file = discord.File(full_file_name, seed_file_name)
+
+                user = self.client.get_user(runner_data['uid'])
+
+                multiworld_command = f"""
+                    Total number of players: {len(self.runners)}
+                    Your game slot is: {runner_data['multiworld_slot']}
+                    Server hostname: {generation_result['server']['host']}:{generation_result['server']['port']}
+                    Server password: {generation_result['server']['password']}
+
+                    Your multiworld ROM file below:
+                """
+                await user.send(textwrap.dedent(multiworld_command), file=seed_file)
+
+            await asyncio.sleep(3)
+            await reply_channel_string(message, 'All seeds and multiworld command have been distributed to all players. Use .ready when you are in-game and ready to start.')
 
         if message.content.startswith('.ready'):
             if runner_name not in self.runners:
