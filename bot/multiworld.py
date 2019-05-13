@@ -153,7 +153,7 @@ class Multiworld():
 
         output_data = json.dumps({
             "server": {
-                "host": "alttp.gigabit.nu",
+                "host": "multiworld.nordicrandomizer.nu",
                 "port": port,
                 "password": password
             },
