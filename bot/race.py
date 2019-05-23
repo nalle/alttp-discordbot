@@ -392,7 +392,7 @@ class Race():
             remaining = await self.check_remaining()
 
             if remaining != 0:
-                await reply_channel(message, 'remaining', num=remaining)
+                await reply_channel(message, 'remaining', num=remaining, name=name)
                 return
 
             if self.type in ('open', 'standard', 'custom', 'multiworld'):
