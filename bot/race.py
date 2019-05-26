@@ -380,9 +380,9 @@ class Race():
                     await reply_channel_string(message, result)
                 else:
                     await reply_channel(message, 'done', time=str(timedelta(
-                        seconds=self.runners[message.author.name]['time'] - self.time,
-                        name=message.author.name
-                    )))
+                        seconds=self.runners[message.author.name]['time'] - self.time
+                        )),
+                        name=message.author.name)
             else:
                 await reply_channel(message, 'notstarted')
 
