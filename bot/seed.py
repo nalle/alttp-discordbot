@@ -7,9 +7,9 @@ class SeedGenerator():
     valid_seed_commands = {
         'logic': ['NoGlitches'],
         'difficulty': ['normal', 'hard', 'expert'],
-        'variation': ['none'],
-        'mode': ['ganon'],
-        'goal': ['ganon'],
+        'variation': ['keysanity', 'retro'],
+        'mode': ['standard', 'open', 'swordless'],
+        'goal': ['ganon', 'pedistal', 'dungeons', 'triforcehunt', 'crystals'],
         'weapons': ['randomized'],
         'tournament': [True, False],
         'spoiler': [True, False],
@@ -31,34 +31,35 @@ class SeedGenerator():
         }
 
     def generate_open(self, **kwargs):
-        return self.generate_seed(variation='open')
+        return self.generate_seed(mode='open')
 
     def generate_standard(self, **kwargs):
-        return self.generate_seed(variation='standard')
+        return self.generate_seed(mode='standard')
 
     def generate_spoiler(self, **kwargs):
         return self.generate_seed(spoiler=True)
 
     def generate_seed(self,
-        logic='NoGlitches', difficulty='normal', variation='standard', mode='ganon',
-        goal='ganon', weapons='randomized', tournament=True, spoiler=False, enemizer=False,
+        logic='NoGlitches', difficulty='normal', variation=None, mode='standard',
+        goal='ganon', weapons='randomized', tournament=True, spoilers=False, enemizer=False,
         lang='en',
     ):
         if logic not in self.valid_seed_commands['logic']:
             raise Exception(f"Invalid argument '{logic}' for argument 'logic' when generating a seed")
 
-        data = {
-            "logic": logic,
-            "difficulty": difficulty,
-            "variation": variation,
-            "mode": mode,
-            "goal": goal,
-            "weapons": weapons,
-            "tournament": tournament,
-            "spoilers": spoiler,
-            "enemizer": enemizer,
-            "lang": lang,
-        }
+        data = {}
+
+        data["logic"] = logic
+        data["difficulty"] = difficulty
+        if variation:
+            data["variation"] = variation
+        data["mode"] = mode
+        data["goal"] = goal
+        data["weapons"] = weapons
+        data["tournament"] = tournament
+        data["spoilers"] = spoilers
+        data["enemizer"] = enemizer
+        data["lang"] = lang
 
         # for key, value in kwargs.items():
         #     data[key] = value
