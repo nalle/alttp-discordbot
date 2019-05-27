@@ -45,6 +45,8 @@ spec:
                 secretKeyRef:
                   name: redispassword
                   key: password
+            - name: NAMESPACE
+              value: "discord-dev"
       volumes:
         - name: kubeconfig
           secret:
