@@ -87,6 +87,10 @@ class Multiworld():
                     
         return multidata, files
 
+    def personalize(self, uuid, **kwargs):
+        print(uuid, kwargs)
+        return True
+
     def create_multiworld(self, uuid, **kwargs):
         redis_host = os.environ.get('REDIS_HOST') or "127.0.0.1"
         redis_port = os.environ.get('REDIS_PORT') or 6379
@@ -164,6 +168,9 @@ class Multiworld():
 
         return output_data
 
+def start_personalization_job(*args, **kwargs):
+    m = Multiworld()
+    m.personalization(*args, **kwargs)
 
 def start_multiworld_job(*args, **kwargs):
     m = Multiworld()

@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alttpbot
+  labels:
+    app: alttpbot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alttpbot
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: alttpbot
+    spec:
+      containers:
+        - name: alttpbot
+          imagePullPolicy: Always
+          image: registry.gigabit.nu/alttpbot:latest
+          volumeMounts:
+            - mountPath: /multiworld/
+              name: multiworld-storage
+            - mountPath: /root/.kube
+              readOnly: true
+              name: kubeconfig
+          ports:
+            - name: http
+              containerPort: 80
+          env:
+            - name: ROMS_BASE_PATH
+              value: /multiworld
+            - name: DISCORD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: discordtoken
+                  key: token
+            - name: REDIS_HOST
+              value: "212.63.208.216"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redispassword
+                  key: password
+      volumes:
+        - name: kubeconfig
+          secret:
+            secretName: kubernetes-config
+        - name: multiworld-storage
+          persistentVolumeClaim:
+            claimName: multiworlddev-claim
+      imagePullSecrets:
+        - name: regcred

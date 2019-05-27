@@ -8,7 +8,7 @@ import time
 import uuid
 
 from bot.messages import reply_channel, message_mapping, reply_channel_string
-from bot.multiworld import start_multiworld_job
+from bot.multiworld import start_multiworld_job, start_personalization_job
 from datetime import timedelta
 from redis import Redis
 from rq import Queue
@@ -267,17 +267,34 @@ class Race():
                         print(f"Waiting for RQ worker to finish up and write to key : {self.uuid}")
                         await asyncio.sleep(10)
 
+                # Assign a slot to each player
+                personalization_uuids = []
+                settings = {"heartbeat": "quarter", "sprite": "vivi"}
+                counter = 1
+                for runner_name, runner_data in self.runners.items():
+                    player_uuid = str(uuid.uuid4())
+                    self.runners[runner_name]['multiworld_slot'] = counter
+                    q.enqueue(start_personalization_job,
+                              player_uuid,
+                              **settings
+                    )
+                    personalization_uuids.append(player_uuid)
+                    counter += 1
+
+                uuid_counter = 0
+                while uuid_counter <= len(personalization_uuids):
+                    for uuid in personalization_uuids:
+                        generation_result = await self.r.get(uuid)
+                        if generation_result:
+                            uuid_counter += 1
+
+                    await asyncio.sleep(1)
+
                 # TODO: Distribute data to channel about seed server
                 await reply_channel(message, 'multiworld_seed_generation_done')
                 await asyncio.sleep(3)
                 await reply_channel(message, 'multiworld_tell_player_to_start')
                 await asyncio.sleep(3)
-
-                # Assign a slot to each player
-                counter = 1
-                for runner_name, runner_data in self.runners.items():
-                    self.runners[runner_name]['multiworld_slot'] = counter
-                    counter += 1
 
                 await self.persist()
 
@@ -287,7 +304,7 @@ class Race():
                 counter = 1
                 for runner_name in self.runners:
                     for file_path in file_paths:
-                        if f'P{counter}' in file_path:
+                        if f'P{counter}_adjusted' in file_path:
                             self.runners[runner_name]['multiworld_seed'] = file_path
 
                     counter += 1
