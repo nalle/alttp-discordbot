@@ -41,12 +41,11 @@ class Race():
             self.uuid = ""
 
     async def results(self):
-        # TODO: This result printing is probably bad as it do not properly order result on people correct
         result = []
-        for runner in sorted(self.runners, key=operator.itemgetter(1)):
-            result.append([runner, str(timedelta(seconds=self.runners[runner]['time']-self.time))])
+        for runner, values in runners.items():
+            result.append({'nick': runner, 'time': values['time']})
 
-        return "```{}```".format(tabulate(result, ["Runner", "Finish time"], tablefmt="grid"))
+        return "```{}```".format(tabulate(sorted(result, key=lambda x: x['time']), {'nick': "Runner", 'time': "Finish time"}, tablefmt="grid"))
 
     async def persist(self):
         data = {
