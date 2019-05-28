@@ -19,6 +19,7 @@ class Race():
 
     def __init__(self, channel, redis):
         self.r = redis
+        self.u = uuid
 
     async def initialize(self, channel, client):
         race = await self.r.get(channel)
@@ -261,31 +262,47 @@ class Race():
                     if generation_result:
                         print("RQ worker complete...")
                         print(generation_result)
-                        generation_result = json.loads(generation_result)
+                        server_results = json.loads(generation_result)
                         break
                     else:
                         print(f"Waiting for RQ worker to finish up and write to key : {self.uuid}")
                         await asyncio.sleep(10)
 
+                file_paths = server_results['roms']
+
+                # Bind each rom file to each player
+                counter = 1
+                for runner_name in self.runners:
+                    for file_path in file_paths:
+                        if f'P{counter}' in file_path:
+                            self.runners[runner_name]['multiworld_slot'] = counter
+                            self.runners[runner_name]['multiworld_seed'] = file_path
+
+                    counter += 1
+
                 # Assign a slot to each player
                 personalization_uuids = []
-                settings = {"heartbeat": "quarter", "sprite": "vivi"}
+                settings = {"heartbeep": "quarter", "sprite": "/opt/ALttPEntranceRandomizer/data/sprites/official/vivi.1.zspr"}
                 counter = 1
-                for runner_name, runner_data in self.runners.items():
-                    player_uuid = str(uuid.uuid4())
-                    self.runners[runner_name]['multiworld_slot'] = counter
+                for runner_name in self.runners:
+                    player_uuid = str(self.u.uuid4())
                     q.enqueue(start_personalization_job,
                               player_uuid,
+                              self.runners[runner_name]['multiworld_seed'],
                               **settings
                     )
-                    personalization_uuids.append(player_uuid)
+                    personalization_uuids.append({"runner_name": runner_name, "uuid": player_uuid})
+                    print("Created Adjuster job for: player {} with uuid {}, settings {}".format(runner_name, player_uuid, settings))
                     counter += 1
 
                 uuid_counter = 0
                 while uuid_counter <= len(personalization_uuids):
-                    for uuid in personalization_uuids:
-                        generation_result = await self.r.get(uuid)
+                    for entry in personalization_uuids:
+                        generation_result = await self.r.get(entry['uuid'])
                         if generation_result:
+                            for runner_name in self.runners:
+                                if runner_name == entry['runner_name']:
+                                    self.runners[runner_name]['multiworld_seed'] = generation_result.decode('utf-8')
                             uuid_counter += 1
 
                     await asyncio.sleep(1)
@@ -296,20 +313,6 @@ class Race():
                 await reply_channel(message, 'multiworld_tell_player_to_start')
                 await asyncio.sleep(3)
 
-                await self.persist()
-
-                file_paths = generation_result['roms']
-
-                # Bind each rom file to each player
-                counter = 1
-                for runner_name in self.runners:
-                    for file_path in file_paths:
-                        if f'P{counter}_adjusted' in file_path:
-                            self.runners[runner_name]['multiworld_seed'] = file_path
-
-                    counter += 1
-
-                await self.persist()
 
                 await reply_channel_string(message, 'All slots and seeds have been assigned, sending out to players')
                 await asyncio.sleep(2)
@@ -328,8 +331,8 @@ class Race():
                 multiworld_command = f"""
                     Total number of players: {len(self.runners)}
                     Your game slot is: {runner_data['multiworld_slot']}
-                    Server hostname: {generation_result['server']['host']}:{generation_result['server']['port']}
-                    Server password: {generation_result['server']['password']}
+                    Server hostname: {server_results['server']['host']}:{server_results['server']['port']}
+                    Server password: {server_results['server']['password']}
 
                     Your multiworld ROM file below:
                 """
@@ -337,6 +340,7 @@ class Race():
 
             await asyncio.sleep(3)
             await reply_channel_string(message, 'All seeds and multiworld command have been distributed to all players. Use .ready when you are in-game and ready to start.')
+            await self.persist()
 
         if message.content.startswith(".ready"):
             if runner_name not in self.runners:

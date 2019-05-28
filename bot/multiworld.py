@@ -74,6 +74,30 @@ class Multiworld():
         k8s.delete_job(job.to_dict()['metadata']['labels']['job-name'])
         return seed[0]
 
+    def _poll_job2(self, job, seed):
+        roms = []
+        multidata = ""
+        wait_for_seed = True
+        wait_for_pod = True
+
+        while wait_for_pod:
+            for pod in k8s.list_pods().to_dict()['items']:
+                if job.to_dict()['metadata']['labels']['job-name'] in pod['metadata']['name']:
+                    if pod['status']['phase'] == "Succeeded":
+                        print(job.to_dict()['metadata']['labels']['job-name'], 'in', pod['metadata']['name'], 'and', pod['status']['phase'], '==', "Succeeded")
+                        pod_name = pod['metadata']['name']
+                        wait_for_pod = False
+            time.sleep(1)
+
+        log = k8s.read_log(pod_name)
+        tmp = re.findall('P([0-9]+)\.sfc$', seed)
+        seed = re.sub('P[0-9]+.sfc$',"P{}_adjusted.sfc".format(tmp[0]), seed)
+
+        k8s.delete_pod(pod_name)
+        k8s.delete_job(job.to_dict()['metadata']['labels']['job-name'])
+        return str(seed)
+
+
     def find_roms(self, seed):
         files = []
 
@@ -87,9 +111,39 @@ class Multiworld():
                     
         return multidata, files
 
-    def personalize(self, uuid, **kwargs):
-        print(uuid, kwargs)
-        return True
+    def personalize(self, uuid, seed, **kwargs):
+        redis_host = os.environ.get('REDIS_HOST') or "127.0.0.1"
+        redis_port = os.environ.get('REDIS_PORT') or 6379
+        redis_password = os.environ.get('REDIS_PASSWORD') or None
+
+        if redis_password is not None:
+            redis_url = "redis://:{}@{}:{}".format(redis_password, redis_host, redis_port)
+        else: 
+            redis_url = "redis://{}:{}".format(redis_password, redis_host, redis_port)
+
+        r = redis.from_url(redis_url)
+
+        self.arguments = []
+        for k, v in kwargs.items():
+            self.arguments.append("--{}".format(k))
+            self.arguments.append("{}".format(v))
+
+        hashid = self.randomString()
+
+        job = k8s.create_job(
+            self.generate_template(
+                template="templates/k8s-batchjob2",
+                seed=os.path.join("/multiworld/",
+                                  seed),
+                name="multiworld-adjuster-{}".format(hashid),
+                arguments=self.arguments,
+            )
+        )
+        seed = self._poll_job2(job, seed)
+
+        r.set(uuid, seed)
+
+        return seed
 
     def create_multiworld(self, uuid, **kwargs):
         redis_host = os.environ.get('REDIS_HOST') or "127.0.0.1"
@@ -170,7 +224,7 @@ class Multiworld():
 
 def start_personalization_job(*args, **kwargs):
     m = Multiworld()
-    m.personalization(*args, **kwargs)
+    m.personalize(*args, **kwargs)
 
 def start_multiworld_job(*args, **kwargs):
     m = Multiworld()

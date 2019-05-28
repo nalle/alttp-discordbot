@@ -28,5 +28,5 @@ spec:
       volumes:
         - name: multiworld-storage
           persistentVolumeClaim:
-            claimName: multiworld-claim
+            claimName: multiworlddev-claim
 
