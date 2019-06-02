@@ -7,6 +7,7 @@ import textwrap
 import time
 import uuid
 
+from bot.sprites import sprites
 from bot.messages import reply_channel, message_mapping, reply_channel_string
 from bot.multiworld import start_multiworld_job, start_personalization_job
 from datetime import timedelta
@@ -203,6 +204,22 @@ class Race():
             await self._ready_spoiler(message, runner_name)
 
     async def parse_message_multiworld_race(self, message):
+        redis_host = os.environ.get('REDIS_HOST') or "127.0.0.1"
+        #redis_port = os.environ.get('REDIS_PORT') or 6379
+        redis_port = 6379
+        redis_password = os.environ.get('REDIS_PASSWORD') or None
+
+        import redis
+
+        if redis_password is not None:
+            redis_url = "redis://:{}@{}:{}".format(redis_password, redis_host, redis_port)
+        else:
+            redis_url = "redis://{}:{}".format(redis_host, redis_port)
+        print(redis_url)
+
+        r = redis.from_url(redis_url, decode_responses=True,  charset="utf-8")
+
+
         runner_name = message.author.name
 
         if message.content.startswith('.join') or message.content.startswith('.enter'):
@@ -214,6 +231,46 @@ class Race():
             for runner_name, runner_data in self.runners.items():
                 user = self.client.get_user(runner_data['uid'])
                 print(' - ', user)
+
+        # Doesn't work... don't know why
+        if message.content.startswith('.unset'):
+            arg = message.content.split()
+            settings = r.hgetall(str(message.author))
+            if arg[1] in settings:
+                del settings[arg[1]]
+                r.hmset(str(message.author), settings)
+                await reply_channel(message, 'unset_setting_successful', setting=arg[1])
+            else:
+                await reply_channel(message, 'unsupported_setting', setting=arg[1])
+
+        if message.content.startswith('.set'):
+            arg = message.content.split()
+            del arg[0]
+            if arg[0] not in ['sprite','heartbeep','heartcolor']:
+                await reply_channel(message, 'unsupported_setting')
+                return
+
+            if arg[0] == "sprite":
+                if arg[1] not in sprites:
+                    await reply_channel(message, 'no_such_sprite')
+                    return
+                arg[1] = sprites[arg[1]]
+
+            if arg[0] == "heartbeep":
+                if arg[1] not in ['double','normal','half','quarter','off']:
+                    await reply_channel(message, 'heartbeep_help')
+                    return
+
+            if arg[0] == "heartcolor":
+                if arg[1] not in ['red','blue','green','yellow','random']:
+                    await reply_channel(message, 'heartcolor_help')
+                    return
+
+            settings = r.hgetall(str(message.author))
+            settings[arg[0]] = arg[1]
+            
+            r.hmset(str(message.author), settings)
+            await reply_channel(message, 'set_setting_successful', setting=arg[0])
 
         if message.content.startswith('.generate'):
             arg = message.content.split()
@@ -231,21 +288,6 @@ class Race():
 
             for key, value in dict(s.split('=') for s in arg).items():
                 arguments[key] = value
-
-            redis_host = os.environ.get('REDIS_HOST') or "127.0.0.1"
-            #redis_port = os.environ.get('REDIS_PORT') or 6379
-            redis_port = 6379
-            redis_password = os.environ.get('REDIS_PASSWORD') or None
-
-            import redis
-
-            if redis_password is not None:
-                redis_url = "redis://:{}@{}:{}".format(redis_password, redis_host, redis_port)
-            else:
-                redis_url = "redis://{}:{}".format(redis_host, redis_port)
-            print(redis_url)
-
-            r = redis.from_url(redis_url, decode_responses=True,  charset="utf-8")
 
             async with message.channel.typing():
                 q = Queue(connection=r)

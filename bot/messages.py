@@ -22,6 +22,12 @@ message_mapping = {
     'multiworld_seed_generation_done': 'Seed generation has completed and server has been started. Sending out server information and ROMs to players.',
     'multiworld_tell_player_to_start': 'Please start you emulator and load the provided rom, start your multiworld client with the provided command.',
     'debug': 'One personalization done',
+    'no_such_sprite': 'No such sprite available.',
+    'heartbeep_help': 'Valid heartbeep settings are double, normal, half, quarter or off.',
+    'heartcolor_help': 'Valid heartcolors are red, blue, green, yellow or random.',
+    'unsupported_setting': 'Unsupported setting, {setting}, valid settings are sprite, heartbeep and heartcolor.',
+    'set_setting_successful': '{setting} setting has been set.',
+    'unset_setting_successful': '{setting} setting has been removed.',
 }
 
 
