@@ -7,7 +7,7 @@ RUN pip3 install --upgrade pip
 RUN pip3 install -r /tmp/requirements.txt
 
 COPY bot /opt/discordbot/bot
-COPY alttp.py /opt/discordbot
+COPY main.py /opt/discordbot
 WORKDIR /opt/discordbot
 
-CMD python3 -u alttp.py
+CMD python3 -u main.py

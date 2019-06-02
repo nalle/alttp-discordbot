@@ -20,7 +20,7 @@ spec:
       containers:
         - name: alttpbot
           imagePullPolicy: Always
-          image: registry.gigabit.nu/alttpbot:latest
+          image: registry.gigabit.nu/alttpbot/discord-dev:latest
           volumeMounts:
             - mountPath: /multiworld/
               name: multiworld-storage

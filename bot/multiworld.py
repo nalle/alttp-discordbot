@@ -14,6 +14,11 @@ k8s = Kubernetes()
 
 
 class Multiworld():
+    def __init__(self):
+        if "NAMESPACE" in os.environ:
+            self.templatedir = "templates/{}".format(os.environ.get('NAMESPACE'))
+        else:
+            self.templatedir = "templates/default"
 
     def randomString(self, stringLength=10):
         letters = string.ascii_lowercase
@@ -132,7 +137,7 @@ class Multiworld():
 
         job = k8s.create_job(
             self.generate_template(
-                template="templates/k8s-batchjob2",
+                template="{}/k8s-adjuster-job".format(self.templatedir),
                 seed=os.path.join("/multiworld/",
                                   seed),
                 name="multiworld-adjuster-{}".format(hashid),
@@ -171,19 +176,19 @@ class Multiworld():
 
         pv = k8s.create_persistent_volume(
             self.generate_template(
-                template="templates/k8s-persistent-volume",
+                template="{}/k8s-persistent-volume".format(self.templatedir),
             )
         )
 
         pvc = k8s.create_persistent_volumeclaim(
             self.generate_template(
-                template="templates/k8s-persistent-volume-claim",
+                template="{}/k8s-persistent-volume-claim".format(self.templatedir),
             )
         )
 
         job = k8s.create_job(
             self.generate_template(
-                template="templates/k8s-batchjob",
+                template="{}/k8s-generation-job".format(self.templatedir),
                 name="multiworld-generator-{}".format(hashid),
                 arguments=self.arguments,
             )
@@ -194,7 +199,7 @@ class Multiworld():
 
         deployment = k8s.create_deployment(
             self.generate_template(
-                template="templates/k8s-deployment",
+                template="{}/k8s-server-deployment".format(self.templatedir),
                 name="multiworld-server-{}".format(hashid),
                 port=port,
                 password=password,
@@ -203,7 +208,7 @@ class Multiworld():
         )
         service  = k8s.create_service(
             self.generate_template(
-                template="templates/k8s-service",
+                template="{}/k8s-server-service".format(self.templatedir),
                 name="multiworld-server-{}".format(hashid),
                 port=port,
             )

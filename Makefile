@@ -1,33 +1,33 @@
 DATE=$(shell date +%s | shasum | cut -d' ' -f1)
+NAMESPACE := $(or ${NAMESPACE},${NAMESPACE},default)
+
+define deploy_alttpbot
+	-kubectl delete --namespace=${NAMESPACE} -f templates/${NAMESPACE}/deployment.yml
+	kubectl apply --namespace=${NAMESPACE} -f templates/${NAMESPACE}/deployment.yml
+endef
+
+define deploy_worker
+	-kubectl delete --namespace=${NAMESPACE} -f multiworld-worker/templates/${NAMESPACE}/deployment.yml
+	kubectl apply --namespace=${NAMESPACE} -f multiworld-worker/templates/${NAMESPACE}/deployment.yml
+endef
 
 all:
-	docker build -t registry.gigabit.nu/alttpbot:latest .
+	docker build -t registry.gigabit.nu/alttpbot/${NAMESPACE}:latest .
+	docker build -t registry.gigabit.nu/multiworld-worker/${NAMESPACE}:latest -f multiworld-worker/Dockerfile --build-arg NAMESPACE=${NAMESPACE} .
 
-deploy:
-	docker build -t registry.gigabit.nu/alttpbot:latest .
-	docker push registry.gigabit.nu/alttpbot:latest
-	-kubectl delete -f deployment.yml
-	kubectl apply -f deployment.yml
+push:
+	docker push registry.gigabit.nu/alttpbot/${NAMESPACE}:latest
+	docker push registry.gigabit.nu/multiworld-worker/${NAMESPACE}:latest
 
-reset:
-	-kubectl delete -f deployment.yml
-	kubectl apply -f deployment.yml
+deploy: all push
+	$(call deploy_alttpbot)
+	$(call deploy_worker)
+
+discord:
+	docker build -t registry.gigabit.nu/alttpbot/${NAMESPACE}:latest .
+	docker push registry.gigabit.nu/alttpbot/${NAMESPACE}:latest
 
 worker:
-	docker build -t registry.gigabit.nu/multiworld-worker:latest -f multiworld-worker/Dockerfile .
-	docker push registry.gigabit.nu/multiworld-worker:latest
-	-kubectl delete -f multiworld-worker/deployment.yml
-	kubectl apply -f multiworld-worker/deployment.yml
-
-dev_deploy:
-	docker build -t registry.gigabit.nu/alttpbot:latest .
-	docker push registry.gigabit.nu/alttpbot:latest
-	-kubectl --namespace=discord-dev delete -f staging_deployment.yml
-	kubectl --namespace=discord-dev apply -f staging_deployment.yml
-
-dev_worker:
-	docker build -t registry.gigabit.nu/multiworld-worker:latest -f multiworld-worker/Dockerfile .
-	docker push registry.gigabit.nu/multiworld-worker:latest
-	-kubectl --namespace=discord-dev delete -f multiworld-worker/staging_deployment.yml
-	kubectl --namespace=discord-dev apply -f multiworld-worker/staging_deployment.yml
+	docker build -t registry.gigabit.nu/multiworld-worker/${NAMESPACE}:latest -f multiworld-worker/Dockerfile --build-arg NAMESPACE=${NAMESPACE} .
+	docker push registry.gigabit.nu/multiworld-worker/${NAMESPACE}:latest
 
