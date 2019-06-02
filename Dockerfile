@@ -8,6 +8,7 @@ RUN pip3 install -r /tmp/requirements.txt
 
 COPY bot /opt/discordbot/bot
 COPY main.py /opt/discordbot
+COPY templates /opt/discordbot/templates
 WORKDIR /opt/discordbot
 
 CMD python3 -u main.py

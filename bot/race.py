@@ -234,7 +234,7 @@ class Race():
 
         if message.content.startswith('.unset'):
             arg = message.content.split()
-            settings = r.hgetall(str(message.author))
+            settings = r.hgetall(message.author.id)
             if arg[1] in settings:
                 r.hdel(str(message.author), arg[1])
                 await reply_channel(message, 'unset_setting_successful', setting=arg[1], name=message.author.name)
@@ -242,7 +242,7 @@ class Race():
                 await reply_channel(message, 'unsupported_setting', setting=arg[1])
 
         if message.content.startswith('.defaults'):
-            settings = r.hgetall(str(message.author))
+            settings = r.hgetall(message.author.id)
             await reply_channel(message, 'list_settings', name=message.author.name, settings=settings)
 
         if message.content.startswith('.set'):
@@ -276,10 +276,10 @@ class Race():
                     await reply_channel(message, 'notifications_help')
                     return
 
-            settings = r.hgetall(str(message.author))
+            settings = r.hgetall(message.author.id)
             settings[arg[1]] = arg[2]
             
-            r.hmset(str(message.author), settings)
+            r.hmset(message.author.id, settings)
             await reply_channel(message, 'set_setting_successful', setting=arg[1], name=message.author.name)
 
         if message.content.startswith('.generate'):
@@ -333,9 +333,9 @@ class Race():
 
                 # Assign a slot to each player
                 personalization_uuids = []
-                settings = r.hgetall(str(message.author))
                 counter = 1
                 for runner_name in self.runners:
+                    settings = r.hgetall(self.runners[runner_name]['uid'])
                     player_uuid = str(self.u.uuid4())
                     q.enqueue(start_personalization_job,
                               player_uuid,
