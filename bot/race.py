@@ -237,9 +237,13 @@ class Race():
             settings = r.hgetall(str(message.author))
             if arg[1] in settings:
                 r.hdel(str(message.author), arg[1])
-                await reply_channel(message, 'unset_setting_successful', setting=arg[1])
+                await reply_channel(message, 'unset_setting_successful', setting=arg[1], name=message.author.name)
             else:
                 await reply_channel(message, 'unsupported_setting', setting=arg[1])
+
+        if message.content.startswith('.defaults'):
+            settings = r.hgetall(str(message.author))
+            await reply_channel(message, 'list_settings', name=message.author.name, settings=settings)
 
         if message.content.startswith('.set'):
             arg = message.content.split()
@@ -276,7 +280,7 @@ class Race():
             settings[arg[1]] = arg[2]
             
             r.hmset(str(message.author), settings)
-            await reply_channel(message, 'set_setting_successful', setting=arg[1])
+            await reply_channel(message, 'set_setting_successful', setting=arg[1], name=message.author.name)
 
         if message.content.startswith('.generate'):
             arg = message.content.split()

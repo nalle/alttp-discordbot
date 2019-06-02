@@ -27,9 +27,10 @@ message_mapping = {
     'heartcolor_help': 'Valid heartcolors are red, blue, green, yellow or random.',
     'notifications_help': 'Valid notification settings are true or false.',
     'unsupported_setting': 'Unsupported setting {setting}, valid settings are notifications, sprite, heartbeep and heartcolor.',
-    'set_setting_successful': 'Default {setting} has been set.',
-    'unset_setting_successful': 'Default {setting} has been removed.',
+    'set_setting_successful': 'Default {setting} for {name} has been set.',
+    'unset_setting_successful': 'Default {setting} for {name} has been removed.',
     'missing_arguments': 'Too few arguments, setting and value are required.',
+    'list_settings': 'Settings for {name} are:\n{settings}',
 }
 
 
