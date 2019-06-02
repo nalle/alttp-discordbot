@@ -1,0 +1,94 @@
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: redisdev-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/srv/k8s_data/redis-dev"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: redisdev-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels:
+    app: redis
+    redis-sentinel: "true"
+    role: master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: master
+          imagePullPolicy: Always
+          image: registry.gigabit.nu/redis:v1
+          command: ["redis-server"]
+          args: ["--requirepass", "$(REDIS_PASSWORD)"]
+          env:
+            - name: MASTER
+              value: "true"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redispassword
+                  key: password
+
+          ports:
+            - containerPort: 6379
+          resources:
+            limits:
+              cpu: "0.1"
+          volumeMounts:
+            - mountPath: /redis-master-data
+              name: redisdev-storage
+      imagePullSecrets:
+        - name: regcred
+      volumes:
+        - name: redisdev-storage
+          persistentVolumeClaim:
+            claimName: redisdev-claim
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  selector:
+    app: redis
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 6379
+  externalIPs:
+  - 10.233.56.42
+  - 212.63.208.216

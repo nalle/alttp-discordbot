@@ -21,6 +21,7 @@ message_mapping = {
     'multiworld_notstarted': "There is currently no multiworld race.",
     'multiworld_seed_generation_done': 'Seed generation has completed and server has been started. Sending out server information and ROMs to players.',
     'multiworld_tell_player_to_start': 'Please start you emulator and load the provided rom, start your multiworld client with the provided command.',
+    'debug': 'One personalization done',
 }
 
 

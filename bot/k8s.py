@@ -1,6 +1,7 @@
 from kubernetes import client, config, utils
 from ruamel.yaml import YAML
 import datetime
+import os
 
 yaml = YAML()
 config.load_kube_config()
@@ -23,7 +24,7 @@ class Kubernetes():
             dep = yaml.load(body)
             k8s = client.CoreV1Api()
             resp = k8s.create_namespaced_service(
-                body=dep, namespace="default")
+                body=dep, namespace=os.environ.get("NAMESPACE", "default"))
             return resp
         except Exception as e:
             return e
@@ -33,7 +34,7 @@ class Kubernetes():
             dep = yaml.load(body)
             k8s = client.AppsV1beta2Api()
             resp = k8s.create_namespaced_deployment(
-                body=dep, namespace="default")
+                body=dep, namespace=os.environ.get("NAMESPACE", "default"))
             return resp
         except Exception as e:
             return e
@@ -43,7 +44,7 @@ class Kubernetes():
             dep = yaml.load(body)
             k8s = client.CoreV1Api()
             resp = k8s.create_namespaced_persistent_volume_claim(
-                body=dep, namespace="default")
+                body=dep, namespace=os.environ.get("NAMESPACE", "default"))
             return resp
         except Exception as e:
             return e
@@ -55,7 +56,7 @@ class Kubernetes():
             dep['spec']['backoffLimit'] = int(dep['spec']['backoffLimit']) 
             k8s = client.BatchV1Api()
             resp = k8s.create_namespaced_job(
-                body=dep, namespace="default")
+                body=dep, namespace=os.environ.get("NAMESPACE", "default"))
             return resp
         except Exception as e:
             return e
@@ -63,57 +64,57 @@ class Kubernetes():
     def delete_job(self, name):
         k8s = client.BatchV1Api()
         resp = k8s.delete_namespaced_job(
-            name=name, namespace="default")
+            name=name, namespace=os.environ.get("NAMESPACE", "default"))
         return resp
 
     def delete_service(self, name):
         k8s = client.CoreV1Api()
         resp = k8s.delete_namespaced_service(
-            name=name, namespace="default")
+            name=name, namespace=os.environ.get("NAMESPACE", "default"))
         return resp
 
     def delete_pod(self, name):
         k8s = client.CoreV1Api()
         resp = k8s.delete_namespaced_pod(
-            name=name, namespace="default")
+            name=name, namespace=os.environ.get("NAMESPACE", "default"))
         return resp
 
     def delete_deployment(self, name):
         k8s = client.AppsV1beta2Api()
         resp = k8s.delete_namespaced_deployment(
-            name=name, namespace="default")
+            name=name, namespace=os.environ.get("NAMESPACE", "default"))
         return resp
 
     def delete_replica_set(self, name):
         k8s = client.AppsV1beta2Api()
         resp = k8s.delete_namespaced_replica_set(
-            name=name, namespace="default")
+            name=name, namespace=os.environ.get("NAMESPACE", "default"))
         return resp
 
 
     def read_log(self, name):
         k8s = client.CoreV1Api()
-        return k8s.read_namespaced_pod_log(name=name, namespace="default")
+        return k8s.read_namespaced_pod_log(name=name, namespace=os.environ.get("NAMESPACE", "default"))
 
     def list_jobs(self):
         k8s = client.BatchV1Api()
-        return k8s.list_namespaced_job(namespace="default", pretty=True)
+        return k8s.list_namespaced_job(namespace=os.environ.get("NAMESPACE", "default"), pretty=True)
 
     def list_pods(self):
         k8s = client.CoreV1Api()
-        return k8s.list_namespaced_pod(namespace="default", pretty=True)
+        return k8s.list_namespaced_pod(namespace=os.environ.get("NAMESPACE", "default"), pretty=True)
 
     def list_services(self):
         k8s = client.CoreV1Api()
-        return k8s.list_namespaced_service(namespace="default", pretty=True)
+        return k8s.list_namespaced_service(namespace=os.environ.get("NAMESPACE", "default"), pretty=True)
 
     def list_deployments(self):
         k8s = client.AppsV1beta2Api()
-        return k8s.list_namespaced_deployment(namespace="default", pretty=True)
+        return k8s.list_namespaced_deployment(namespace=os.environ.get("NAMESPACE", "default"), pretty=True)
 
     def list_replica_sets(self):
         k8s = client.AppsV1beta2Api()
-        return k8s.list_namespaced_replica_set(namespace="default", pretty=True)
+        return k8s.list_namespaced_replica_set(namespace=os.environ.get("NAMESPACE", "default"), pretty=True)
 
 
     def cleanup_services(self, ttl = 86400):
