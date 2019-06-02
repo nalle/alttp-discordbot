@@ -24,6 +24,6 @@ spec:
       volumes:
         - name: multiworld-storage
           persistentVolumeClaim:
-            claimName: multiworlddev-claim
+            claimName: multiworld-claim
   backoffLimit: 1
 

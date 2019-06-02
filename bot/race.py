@@ -246,7 +246,7 @@ class Race():
                 redis_url = "redis://{}:{}".format(redis_host, redis_port)
             print(redis_url)
 
-            r = redis.from_url(redis_url)
+            r = redis.from_url(redis_url, decode_responses=True,  charset="utf-8")
 
             async with message.channel.typing():
                 q = Queue(connection=r)
@@ -282,7 +282,7 @@ class Race():
 
                 # Assign a slot to each player
                 personalization_uuids = []
-                settings = {"heartbeep": "quarter", "sprite": "/opt/ALttPEntranceRandomizer/data/sprites/official/vivi.1.zspr"}
+                settings = r.hgetall(str(message.author))
                 counter = 1
                 for runner_name in self.runners:
                     player_uuid = str(self.u.uuid4())

@@ -2,7 +2,7 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: redis-volume
+  name: redisdev-volume
   labels:
     type: local
 spec:
@@ -12,12 +12,12 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/srv/k8s_data/redis"
+    path: "/srv/k8s_data/redis-dev"
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: redis-claim
+  name: redisdev-claim
 spec:
   storageClassName: manual
   accessModes:
@@ -68,13 +68,13 @@ spec:
               cpu: "0.1"
           volumeMounts:
             - mountPath: /redis-master-data
-              name: redis-storage
+              name: redisdev-storage
       imagePullSecrets:
         - name: regcred
       volumes:
-        - name: redis-storage
+        - name: redisdev-storage
           persistentVolumeClaim:
-            claimName: redis-claim
+            claimName: redisdev-claim
 ---
 kind: Service
 apiVersion: v1
@@ -90,5 +90,5 @@ spec:
   - protocol: TCP
     port: 6379
   externalIPs:
-  - 10.233.56.41
-  - 212.63.208.215
+  - 10.233.56.42
+  - 212.63.208.216

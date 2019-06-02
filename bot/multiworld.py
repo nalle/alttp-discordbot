@@ -121,7 +121,7 @@ class Multiworld():
         else: 
             redis_url = "redis://{}:{}".format(redis_password, redis_host, redis_port)
 
-        r = redis.from_url(redis_url)
+        r = redis.from_url(redis_url, decode_responses=True,  charset="utf-8")
 
         self.arguments = []
         for k, v in kwargs.items():
