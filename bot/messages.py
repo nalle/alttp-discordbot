@@ -25,9 +25,11 @@ message_mapping = {
     'no_such_sprite': 'No such sprite available.',
     'heartbeep_help': 'Valid heartbeep settings are double, normal, half, quarter or off.',
     'heartcolor_help': 'Valid heartcolors are red, blue, green, yellow or random.',
-    'unsupported_setting': 'Unsupported setting, {setting}, valid settings are sprite, heartbeep and heartcolor.',
-    'set_setting_successful': '{setting} setting has been set.',
-    'unset_setting_successful': '{setting} setting has been removed.',
+    'notifications_help': 'Valid notification settings are true or false.',
+    'unsupported_setting': 'Unsupported setting {setting}, valid settings are notifications, sprite, heartbeep and heartcolor.',
+    'set_setting_successful': 'Default {setting} has been set.',
+    'unset_setting_successful': 'Default {setting} has been removed.',
+    'missing_arguments': 'Too few arguments, setting and value are required.',
 }
 
 

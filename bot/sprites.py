@@ -147,4 +147,4 @@ sprites = {
            "outlinelink": "/opt/ALttPEntranceRandomizer/data/sprites/official/outlinelink.1.zspr",
            "pug": "/opt/ALttPEntranceRandomizer/data/sprites/official/pug.1.zspr",
            "zelda": "/opt/ALttPEntranceRandomizer/data/sprites/official/zelda.1.zspr"
-          }
+}
