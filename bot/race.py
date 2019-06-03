@@ -47,7 +47,12 @@ class Race():
         for runner, values in self.runners.items():
             result.append({'nick': runner, 'time': values['time']})
 
-        return "```{}```".format(tabulate(sorted(result, key=lambda x: x['time']), {'nick': "Runner", 'time': "Finish time"}, tablefmt="grid"))
+        output = []
+        for item in sorted(result, key=lambda x: x['time']):
+            item['time'] = str(timedelta(seconds=item['time']-self.time))
+            output.append(item)     
+
+        return "```{}```".format(tabulate(output, {'nick': "Runner", 'time': "Finish time"}, tablefmt="grid"))
 
     async def persist(self):
         data = {
