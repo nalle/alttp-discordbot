@@ -130,8 +130,11 @@ class Multiworld():
 
         self.arguments = []
         for k, v in kwargs.items():
-            self.arguments.append("--{}".format(k))
-            self.arguments.append("{}".format(v))
+            if k == 'notifications' and v == 'false':
+                self.arguments.append("--disable_notifications")
+            else:
+                self.arguments.append("--{}".format(k))
+                self.arguments.append("{}".format(v))
 
         hashid = self.randomString()
 

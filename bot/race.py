@@ -251,7 +251,7 @@ class Race():
                 await reply_channel(message, 'missing_arguments')
                 return
 
-            if arg[1] not in ['sprite','heartbeep','heartcolor']:
+            if arg[1] not in ['sprite','heartbeep','heartcolor','notifications']:
                 await reply_channel(message, 'unsupported_setting', setting=arg[1])
                 return
 
@@ -272,9 +272,14 @@ class Race():
                     return
 
             if arg[1] == "notifications":
-                if arg[2].lower() not in ['true','false']:
+                if arg[2].lower() not in ['true','false','on','off','1','0','yes','no']:
                     await reply_channel(message, 'notifications_help')
                     return
+
+                if arg[2].lower() in ['true','on','1','yes']:
+                    arg[2] = "true"
+                else: 
+                    arg[2] = "false"
 
             settings = r.hgetall(message.author.id)
             settings[arg[1]] = arg[2]
