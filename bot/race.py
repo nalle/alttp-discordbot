@@ -44,7 +44,7 @@ class Race():
 
     async def results(self):
         result = []
-        for runner, values in runners.items():
+        for runner, values in self.runners.items():
             result.append({'nick': runner, 'time': values['time']})
 
         return "```{}```".format(tabulate(sorted(result, key=lambda x: x['time']), {'nick': "Runner", 'time': "Finish time"}, tablefmt="grid"))
