@@ -74,6 +74,28 @@ class Client(discord.Client):
 
             await reply_channel_string(message, current_races)
 
+        if message.content.startswith(".help"):
+            args = message.content.split()
+            if len(args) > 1:
+                if args[1] == "multiworld":
+                    await reply_channel(message, 'multiworld_help')
+                    return
+                elif args[1] == "settings":
+                    await reply_channel(message, 'settings_help')
+                    return 
+                elif args[1] == "sprites":
+                    sprite_help = ""
+                    for i, item in enumerate(sorted(sprites.items())):
+                        if i % 8 == 1 and i > 1: 
+                            sprite_help += "\n"
+                        sprite_help += item[0]+", "
+                    sprite_help = sprite_help[:-2]
+                    await reply_channel(message, 'sprites', sprites=sprite_help)
+                    return
+
+            await reply_channel(message, 'basic_help')
+            return
+
         if message.content == ".startrace":
             if race.state:
                 await reply_channel(message, 'alreadystarted')

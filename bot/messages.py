@@ -32,6 +32,54 @@ message_mapping = {
     'missing_arguments': 'Too few arguments, setting and value are required.',
     'list_settings': 'Settings for {name} are:\n{settings}',
     'setting': 'Setting is {setting}',
+    'basic_help': '''```
+  .startrace                  - Creates a race that players can join.
+  .stoprace                   - Stops an already started race.
+  .join                       - Joins a race.
+  .unjoin                     - Leave a race.
+  .quit
+  .forfeit
+  .ready                      - Ready for race, will start a countdown when all players are marked ready.
+  .unready                    - Remove yourself as ready in a race.
+  .standard                   - Generates a seed with state Standard
+  .open                       - Generates a seed with state Open
+  .keysanity                  - Generates a seed with state Open and variation Keysanity
+  .inverted                   - Generates a seed with state Inverted
+  .generate [type]=[value]    - Generates a seed using settings supplied settings, types can be:
+                                        logic: [NoGlitches],
+                                        difficulty: [normal, hard, expert],
+                                        variation: [keysanity, retro],
+                                        mode: [standard, open, swordless,inverted],
+                                        goal: [ganon, pedistal, dungeons, triforcehunt, crystals],
+                                        weapons: [randomized],
+                                        tournament: [True, False],
+                                        spoiler: [True, False],
+                                        enemizer: [True, False],
+                                        lang: [en]
+
+  .help settings              - List settings    
+  .help multiworld            - For multiworld specific help
+  .help sprites               - List all sprites available
+             ```''',
+    'settings_help':'''```
+   .set [setting] [value]     - Sets a setting to a vaule to use by default, valid settings are:
+        sprite [value]        - Sets the seed sprite to use, use .help sprites for a list of valid sprites
+        heartbeep [value]     - Sets heartbeep speed, valid settings are [double,normal,half,quarter,off]
+        heartcolor [value]    - Sets heartcolor, valid settings are [red,green,blue,yellow,random]
+        notifications [value] - Sets notifications on and off, valid settings are [on,off] (multiworld specific setting)
+               ```''',
+    'multiworld_help': '''```
+   .startrace multiworld      - Starts a multiworld race.
+   .stoprace                  - Stops an already started race.
+   .join                      - Joins a race.
+   .unjoin                    - Leave a race.
+   .quit
+   .forfeit     
+   .ready                     - Ready for race, will start a countdown when all players are marked ready. Should never be run before .generate
+                                unless you know what you're doing!  
+   .generate                  - Starts generating a multiworld seed, once completed it will send these to each player togther with server information.
+             ```''',
+    'sprites': 'Available sprites are: \n{sprites}',
 }
 
 
