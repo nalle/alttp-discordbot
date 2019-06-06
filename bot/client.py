@@ -46,7 +46,7 @@ class Client(discord.Client):
         if message.author == self.user:
             return
 
-        channel_name = message.channel.name
+        channel_name = str(message.channel.id)
 
         race = all_races.get(channel_name, None)
 
