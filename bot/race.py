@@ -7,7 +7,6 @@ import textwrap
 import time
 import uuid
 
-from bot.sprites import sprites
 from bot.messages import reply_channel, message_mapping, reply_channel_string
 from bot.multiworld import start_multiworld_job, start_personalization_job
 from datetime import timedelta
@@ -236,61 +235,6 @@ class Race():
             for runner_name, runner_data in self.runners.items():
                 user = self.client.get_user(runner_data['uid'])
                 print(' - ', user)
-
-        if message.content.startswith('.unset'):
-            arg = message.content.split()
-            settings = r.hgetall(message.author.id)
-            if arg[1] in settings:
-                r.hdel(str(message.author), arg[1])
-                await reply_channel(message, 'unset_setting_successful', setting=arg[1], name=message.author.name)
-            else:
-                await reply_channel(message, 'unsupported_setting', setting=arg[1])
-
-        if message.content.startswith('.defaults'):
-            settings = r.hgetall(message.author.id)
-            await reply_channel(message, 'list_settings', name=message.author.name, settings=settings)
-
-        if message.content.startswith('.set'):
-            arg = message.content.split()
-            if len(arg) < 3:
-                await reply_channel(message, 'missing_arguments')
-                return
-
-            if arg[1] not in ['sprite','heartbeep','heartcolor','notifications']:
-                await reply_channel(message, 'unsupported_setting', setting=arg[1])
-                return
-
-            if arg[1] == "sprite":
-                if arg[2] not in sprites:
-                    await reply_channel(message, 'no_such_sprite')
-                    return
-                arg[2] = sprites[arg[2]]
-
-            if arg[1] == "heartbeep":
-                if arg[2] not in ['double','normal','half','quarter','off']:
-                    await reply_channel(message, 'heartbeep_help')
-                    return
-
-            if arg[1] == "heartcolor":
-                if arg[2] not in ['red','blue','green','yellow','random']:
-                    await reply_channel(message, 'heartcolor_help')
-                    return
-
-            if arg[1] == "notifications":
-                if arg[2].lower() not in ['true','false','on','off','1','0','yes','no']:
-                    await reply_channel(message, 'notifications_help')
-                    return
-
-                if arg[2].lower() in ['true','on','1','yes']:
-                    arg[2] = "true"
-                else: 
-                    arg[2] = "false"
-
-            settings = r.hgetall(message.author.id)
-            settings[arg[1]] = arg[2]
-            
-            r.hmset(message.author.id, settings)
-            await reply_channel(message, 'set_setting_successful', setting=arg[1], name=message.author.name)
 
         if message.content.startswith('.generate'):
             arg = message.content.split()

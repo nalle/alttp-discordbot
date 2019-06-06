@@ -8,6 +8,7 @@ from bot.runner import Runner
 from bot.race import Race
 from bot.messages import reply_channel, message_mapping, reply_channel_string
 from bot.seed import SeedGenerator
+from bot.sprites import sprites
 
 import aioredis
 
@@ -98,6 +99,61 @@ class Client(discord.Client):
             await race.stoprace()
             await reply_channel(message, 'stoprace')
 
+        if message.content.startswith('.unset'):
+            arg = message.content.split()
+            settings = await self.redis.hgetall(message.author.id)
+            if arg[1] in ['notifications','heartbeep','heartcolor','sprite']:
+                await self.redis.hdel(message.author.id, arg[1])
+                await reply_channel(message, 'unset_setting_successful', setting=arg[1], name=message.author.name)
+            else:
+                await reply_channel(message, 'unsupported_setting', setting=arg[1])
+            return
+
+        if message.content.startswith('.defaults'):
+            settings = await self.redis.hgetall(message.author.id)
+            await reply_channel(message, 'list_settings', name=message.author.name, settings=settings)
+            return
+
+        if message.content.startswith('.set'):
+            arg = message.content.split()
+            if len(arg) < 3:
+                await reply_channel(message, 'missing_arguments')
+                return
+
+            if arg[1] not in ['sprite','heartbeep','heartcolor','notifications']:
+                await reply_channel(message, 'unsupported_setting', setting=arg[1])
+                return
+
+            if arg[1] == "sprite":
+                if arg[2] not in sprites:
+                    await reply_channel(message, 'no_such_sprite')
+                    return
+                arg[2] = sprites[arg[2]]
+
+            if arg[1] == "heartbeep":
+                if arg[2] not in ['double','normal','half','quarter','off']:
+                    await reply_channel(message, 'heartbeep_help')
+                    return
+
+            if arg[1] == "heartcolor":
+                if arg[2] not in ['red','blue','green','yellow','random']:
+                    await reply_channel(message, 'heartcolor_help')
+                    return
+
+            if arg[1] == "notifications":
+                if arg[2].lower() not in ['true','false','on','off','1','0','yes','no']:
+                    await reply_channel(message, 'notifications_help')
+                    return
+
+                if arg[2].lower() in ['true','on','1','yes']:
+                    arg[2] = "true"
+                else: 
+                    arg[2] = "false"
+
+            await self.redis.hset(message.author.id, arg[1], arg[2])
+            await reply_channel(message, 'set_setting_successful', setting=arg[1], name=message.author.name)
+            return
+
         #
         # Send the command to the race to allow for it to process and to run any specific action for the given race type
         #
@@ -132,6 +188,23 @@ class Client(discord.Client):
                 await reply_channel_string(message, generated_seed)
                 race.type = "standard"
                 await race.persist()
+
+        if message.content.startswith(".keysanity"):
+            async with message.channel.typing():
+                await reply_channel(message, 'generating_seed')
+                generated_seed = seed.generate_keysanity()
+                await reply_channel_string(message, generated_seed)
+                race.type = "keysanity"
+                await race.persist()
+
+        if message.content.startswith(".inverted"):
+            async with message.channel.typing():
+                await reply_channel(message, 'generating_seed')
+                generated_seed = seed.generate_inverted()
+                await reply_channel_string(message, generated_seed)
+                race.type = "inverted"
+                await race.persist()
+
 
         if message.content.startswith(".open"):
             async with message.channel.typing():
