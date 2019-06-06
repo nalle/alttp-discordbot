@@ -31,6 +31,7 @@ message_mapping = {
     'unset_setting_successful': 'Default {setting} for {name} has been removed.',
     'missing_arguments': 'Too few arguments, setting and value are required.',
     'list_settings': 'Settings for {name} are:\n{settings}',
+    'setting': 'Setting is {setting}',
 }
 
 

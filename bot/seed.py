@@ -8,7 +8,7 @@ class SeedGenerator():
         'logic': ['NoGlitches'],
         'difficulty': ['normal', 'hard', 'expert'],
         'variation': ['keysanity', 'retro'],
-        'mode': ['standard', 'open', 'swordless'],
+        'mode': ['standard', 'open', 'swordless','inverted'],
         'goal': ['ganon', 'pedistal', 'dungeons', 'triforcehunt', 'crystals'],
         'weapons': ['randomized'],
         'tournament': [True, False],
@@ -35,6 +35,12 @@ class SeedGenerator():
 
     def generate_standard(self, **kwargs):
         return self.generate_seed(mode='standard')
+
+    def generate_keysanity(self, **kwargs):
+        return self.generate_seed(variation='keysanity',mode='open')
+
+    def generate_inverted(self, **kwargs):
+        return self.generate_seed(mode='inverted')
 
     def generate_spoiler(self, **kwargs):
         return self.generate_seed(spoiler=True)
