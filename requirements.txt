@@ -8,3 +8,4 @@ rq
 ruamel.yaml
 tabulate
 xkcdpass
+requests

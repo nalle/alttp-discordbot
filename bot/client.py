@@ -4,6 +4,7 @@ import json
 import asyncio
 import time
 import random
+import requests
 from datetime import timedelta
 from bot.runner import Runner
 from bot.race import Race
@@ -29,6 +30,13 @@ class Client(discord.Client):
         super().__init__(*args, **kwargs)
 
         print(message_mapping['bootup'])
+
+    async def random(self, start, stop):
+        r = requests.get("https://www.random.org/integers/?num=1&min={start}&max={stop}&col=1&base=10&format=plain&rnd=new".format(start=start,stop=stop))
+        if r.status_code != 200:
+            return random.randint(start, stop)
+
+        return r.text
 
     async def on_ready(self):
         print(f'Logged on as {self.user}')
@@ -57,7 +65,7 @@ class Client(discord.Client):
             await race.persist()
 
         if message.content.startswith(".roll"):
-            await reply_channel(message, 'dice_roll', random_number=random.randint(1,6))
+            await reply_channel(message, 'dice_roll', random_number=await self.random(1,6))
 
         if message.content.startswith(".races"):
             current_races = {}
