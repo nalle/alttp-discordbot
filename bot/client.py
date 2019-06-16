@@ -3,6 +3,7 @@ import os
 import json
 import asyncio
 import time
+import random
 from datetime import timedelta
 from bot.runner import Runner
 from bot.race import Race
@@ -55,6 +56,9 @@ class Client(discord.Client):
             await race.initialize(channel_name, self)
             await race.persist()
 
+        if message.content.startswith(".roll"):
+            await reply_channel(message, 'dice_roll', random_number=random.randint(1,6))
+
         if message.content.startswith(".races"):
             current_races = {}
 
@@ -103,7 +107,7 @@ class Client(discord.Client):
                 await race.startrace()
                 await reply_channel(message, 'startrace')
 
-        if message.content.startswith(".startrace multiworld"):
+        if message.content.startswith(".startrace multiworld") or message.content.startswith(".startrace mulitworld"):
             if race.state:
                 await reply_channel(message, 'multiworld_alreadystarted')
             else:
