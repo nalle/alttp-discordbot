@@ -7,7 +7,7 @@ class SeedGenerator():
     valid_seed_commands = {
         'logic': ['NoGlitches'],
         'difficulty': ['normal', 'hard', 'expert'],
-        'variation': ['keysanity', 'retro'],
+        'variation': ['key-sanity', 'retro'],
         'mode': ['standard', 'open', 'swordless','inverted'],
         'goal': ['ganon', 'pedistal', 'dungeons', 'triforcehunt', 'crystals'],
         'weapons': ['randomized'],
@@ -37,7 +37,7 @@ class SeedGenerator():
         return self.generate_seed(mode='standard')
 
     def generate_keysanity(self, **kwargs):
-        return self.generate_seed(variation='keysanity',mode='open')
+        return self.generate_seed(variation='key-sanity',mode='open')
 
     def generate_inverted(self, **kwargs):
         return self.generate_seed(mode='inverted')
