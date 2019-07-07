@@ -139,7 +139,7 @@ class Race():
 
         if self.type == 'open':
             await self.parse_message_open_race(message)
-        elif self.type == 'custom':
+        elif self.type == 'custom' or self.type == 'inverted' or self.type == 'keysanity':
             await self.parse_message_open_race(message)
         elif self.type == 'standard':
             await self.parse_message_standard_race(message)
@@ -378,7 +378,7 @@ class Race():
             remaining = await self.check_remaining()
 
             if remaining == 0 and self.time is None:
-                if self.type in ('open', 'standard', 'custom'):
+                if self.type in ('open', 'standard', 'custom', 'keysanity', 'inverted'):
                     await self.persist()
                     await reply_channel(message, 'countdown')
 
@@ -422,7 +422,7 @@ class Race():
                 await reply_channel(message, 'remaining', num=remaining, name=message.author.name)
                 return
 
-            if self.type in ('open', 'standard', 'custom', 'multiworld'):
+            if self.type in ('open', 'standard', 'custom', 'multiworld','inverted','keysanity'):
                 await self.persist()
 
                 await reply_channel(message, 'countdown')
