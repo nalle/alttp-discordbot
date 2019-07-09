@@ -38,6 +38,9 @@ class Client(discord.Client):
 
         return r.text
 
+    async def get_dice_face(self, number):
+        return chr(9855+int(number))
+
     async def on_ready(self):
         print(f'Logged on as {self.user}')
 
@@ -65,7 +68,7 @@ class Client(discord.Client):
             await race.persist()
 
         if message.content.startswith(".roll"):
-            await reply_channel(message, 'dice_roll', random_number=await self.random(1,6))
+            await reply_channel(message, 'dice_roll', dice=await self.get_dice_face(await self.random(1,6)))
 
         if message.content.startswith(".races"):
             current_races = {}

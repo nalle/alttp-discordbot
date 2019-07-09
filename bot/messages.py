@@ -31,7 +31,7 @@ message_mapping = {
     'unset_setting_successful': 'Default {setting} for {name} has been removed.',
     'missing_arguments': 'Too few arguments, setting and value are required.',
     'list_settings': 'Settings for {name} are:\n{settings}',
-    'dice_roll': 'The dice has been rolled and stopped at {random_number}',
+    'dice_roll': 'The dice has been rolled and stopped at {dice}',
     'setting': 'Setting is {setting}',
     'basic_help': '''```
   .startrace                  - Creates a race that players can join.
